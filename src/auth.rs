@@ -1,5 +1,5 @@
 use crate::model::*;
-
+use roles::*;
 
 pub struct AuthenticationInfo {
 
@@ -16,8 +16,6 @@ impl Authorizator {
 
         Ok(Privelegies::from(role))
     }
-
-
 }
 
 
@@ -41,27 +39,36 @@ impl<R: Role> From<R> for Privelegies<R> {
     }
 }
 
-pub trait Role { }
-
-pub struct Admin(u64);
-impl Role for Admin {}
 
 impl Privelegies<Admin> {
-    async fn add_license(&self, license: licenses::License) {
-        self.db_connection.add_license(license);
+
+}
+
+
+impl Privelegies<User> {
+    pub fn get_media() -> Vec<MediaInfo> {
+        
     }
 }
 
-pub struct Unauthenticated;
-impl Role for Unauthenticated { }
+pub mod roles 
+{
+    pub trait Role { }
 
-pub struct User(u64);
-impl Role for User { }
+    pub struct Unauthenticated;
+    impl Role for Unauthenticated { }
+    
+    pub struct User;
+    impl Role for User { }
 
-impl Privelegies<User> {
-    pub fn get_media() -> MediaPoll {
-        
-    }
+    pub struct Author;
+    impl Role for Author {}
+
+    pub struct Moderator;
+    impl Role for Moderator {}
+
+    pub struct Admin;
+    impl Role for Admin {}
 }
 
 
