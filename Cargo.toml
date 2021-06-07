@@ -10,6 +10,8 @@ edition = "2018"
 version = "0.7.2"
 features = []
 
+[dependencies.keter-media-model]
+path = "../keter-media-model"
 
 [dependencies]
 tokio = {version = "1", features = ["rt"] }

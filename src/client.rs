@@ -5,12 +5,13 @@ use crate::{
         PostgresClient,
         establish_connection
     },
-    auth::roles::*
+    auth::roles::*,
+    queries::FromQueryRowError
 };
 
 #[derive(Clone)]
 pub struct Client<R: Role> {
-  client: Arc<PostgresClient>,
+  pub(crate) client: Arc<PostgresClient>,
   _role: PhantomData<R>
 } 
 
@@ -29,6 +30,19 @@ impl<R: Role> Client<R> {
   }
 }
 
-impl Client<Unauthenticated> {
-  
+pub enum ClientError {
+  Postgres(tokio_postgres::Error), 
+  Parse(FromQueryRowError)
+}
+
+impl From<tokio_postgres::Error> for ClientError {
+  fn from(other: tokio_postgres::Error) -> ClientError {
+    ClientError::Postgres(other)
+  }
+}
+
+impl From<FromQueryRowError> for ClientError {
+  fn from(other: FromQueryRowError) -> ClientError {
+    ClientError::Parse(other)
+  }
 }
