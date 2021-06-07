@@ -1,7 +1,7 @@
 use super::{*};
 
 use crate::{
-    auth::roles::Unauthenticated,
+    auth::roles,
     queries::{FromQueryRow, FromQueryRowError}
     };
 
@@ -13,7 +13,7 @@ use keter_media_model::{
 use tokio_postgres::{Statement, Row};
 
 
-impl Client<Author> {
+impl Client<roles::Author> {
     pub async fn post_media(
         &self, 
         media: MediaSearchKey, 
@@ -43,7 +43,7 @@ impl Client<Author> {
         &self, 
         media: MediaSearchKey,
         license: String
-    ) -> ResultUpdate {
+    ) -> ResultUpdateOne<()> {
         todo!()
     }
 
@@ -51,7 +51,7 @@ impl Client<Author> {
         &self,
         material: MaterialKey,
         license: String
-    ) -> ResultUpdate {
+    ) -> ResultUpdateOne<()> {
         todo!()
     }
 
@@ -60,5 +60,13 @@ impl Client<Author> {
         author: AuthorSearchKey
     ) -> ResultGetMany<Usage> {
         todo!()
+    }
+}
+
+use crate::insert_statement;
+#[async_trait]
+impl InitStatements for roles::Author {
+    async fn init_statements(client: &PostgresClient) -> InitStatementsResult {
+        unimplemented!();
     }
 }

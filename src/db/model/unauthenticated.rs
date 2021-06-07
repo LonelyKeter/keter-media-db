@@ -1,7 +1,7 @@
-use super::{*};
+#[macro_use] use super::{*};
 
 use crate::{
-    auth::roles::Unauthenticated,
+    auth::roles,
     queries::{FromQueryRow, FromQueryRowError}
     };
 
@@ -9,12 +9,10 @@ use keter_media_model::{
     media::*,
     userinfo::*
 };
-use tokio_postgres::{Statement, Row};
 
-
-impl Client<Unauthenticated> {
+impl Client<roles::Unauthenticated> {
     pub async fn get_media_many(&self) -> ResultGetMany<MediaInfo> {
-        get_many(&self.client, self.statements["get_media_many"], &[]).await
+        todo!()
     }
 
     pub async fn get_media_many_with_options(&self, options: &GetMediaOptions) -> ResultGetMany<MediaInfo> {
@@ -33,12 +31,23 @@ impl Client<Unauthenticated> {
         todo!()
     }
 
-    pub async fn get_reviews(&self, searh_key: MediaSearchKey) -> ResultGetMany<Review> {
+    pub async fn get_reviews(&self, search_key: MediaSearchKey) -> ResultGetMany<Review> {
         todo!()
     }
 }
 
-use keter_media_model::media::MediaKind;
 pub struct GetMediaOptions {
     
+}
+
+use crate::insert_statement;
+#[async_trait]
+impl InitStatements for roles::Unauthenticated {
+    async fn init_statements(client: &PostgresClient) -> InitStatementsResult {
+        let mut map = StatementCollection::new();
+
+        insert_statement!(client, map, "unauthenticated", "get_media_many");
+        insert_statement!(client, map, "unauthenticated", "get_media_filtered");
+        unimplemented!();
+    }
 }

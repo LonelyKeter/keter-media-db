@@ -1,20 +1,16 @@
-mod unauthenticated;
-mod user;
-mod author;
-mod moderator;
-mod admin;
+#[cfg(feature = "model")]
+pub mod model;
+#[cfg(feature = "auth")]
+pub mod auth;
 
-pub use unauthenticated::*;
-pub use user::*;
-pub use author::*;
-pub use moderator::*;
-pub use admin::*;
+use async_trait::async_trait;
 
 use crate::{
   auth::roles::*,
   client::*
 };
 
+#[cfg(feature = "model")]
 pub struct ModelDB {
   unauthenticated: String,
   user: String,
@@ -23,6 +19,7 @@ pub struct ModelDB {
   admin: String,
 }
 
+#[cfg(feature = "model")]
 impl ModelDB {
   pub async fn unauthenticated(&self) -> Result<Client<Unauthenticated>, tokio_postgres::Error> {
     Client::new(&self.unauthenticated).await
@@ -43,6 +40,11 @@ impl ModelDB {
   pub async fn admin(&self) -> Result<Client<Admin>, tokio_postgres::Error> {
     Client::new(&self.admin).await
   }
+}
+
+#[cfg(feature = "auth")]
+pub struct AuthDB {
+  
 }
 
 use tokio_postgres::{Statement, types::ToSql};
@@ -77,7 +79,7 @@ fn rows_to_vec<'a, T: FromQueryRow>(rows: impl Iterator<Item = &'a Row>) -> Resu
 pub(crate) type PostgresClient = tokio_postgres::Client;
 
 //TODO: Proper error logging
-async fn establish_connection(config: &str) -> Result<PostgresClient, tokio_postgres::Error> {
+pub(crate) async fn establish_connection(config: &str) -> Result<PostgresClient, tokio_postgres::Error> {
   use tokio_postgres::{connect, NoTls};
 
   let (client, connection) = connect(config, NoTls).await?;
@@ -88,6 +90,21 @@ async fn establish_connection(config: &str) -> Result<PostgresClient, tokio_post
   Ok(client)
 }
 
+type InitStatementsResult = Result<StatementCollection, tokio_postgres::Error>;
+#[async_trait]
+pub trait InitStatements {
+  async fn init_statements(client: &PostgresClient) -> InitStatementsResult;
+}
+
+#[macro_export]
+macro_rules! insert_statement {
+  ($client:ident, $map:ident, $folder:literal, $key:literal) => {    
+    let statement = $client
+      .prepare(include_str!(concat!("sql/", $folder, "/", $key, ".sql"))).await?;
+    $map.insert("get_media_many", statement);    
+  }
+}
+
 type ResultGetOne<T> = Result<T, ClientError>;
 type ResultGetMany<T> = Result<Vec<T>, ClientError>;
 
@@ -96,11 +113,4 @@ type ResultPostMany<T> = Result<Vec<T>, ClientError>;
 
 type ResultDeleteOne = Result<(), ClientError>;
 
-pub enum MediaSearchKey {
-  Key(keter_media_model::media::MediaKey),
-  TitleAuthor {title: String, author: String},
-}
-
-pub struct AuthorSearchKey {
-  pub name: String
-}
+type ResultUpdateOne<Ret> = Result<Ret, ClientError>;
