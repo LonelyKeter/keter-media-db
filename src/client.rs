@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, sync::Arc, collections::HashMap};
+use std::{marker::PhantomData, sync::{Arc}, collections::HashMap};
 
 use crate::{
     db::{
@@ -65,4 +65,9 @@ impl From<FromQueryRowError> for ClientError {
   fn from(other: FromQueryRowError) -> ClientError {
     ClientError::Parse(other)
   }
+}
+
+#[cfg(test)]
+mod test {
+  
 }

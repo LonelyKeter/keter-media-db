@@ -1,3 +1,5 @@
+//TODO: Remove dead_code
+#![allow(dead_code)]
 extern crate tokio;
 extern crate tokio_postgres;
 extern crate keter_media_model;
@@ -11,6 +13,20 @@ mod queries;
 mod tests {
     #[test]
     fn it_works() {
-        assert_eq!(2 + 2, 4);
+        use crate::db::ModelDB;
+        
+        let db = ModelDB::builder()
+            .with_unauthenticated("")
+            .with_user("")
+            .with_author("")
+            .with_moderator("")
+            .with_admin("")
+            .build();
+
+        let unathenticated = db.unauthenticated();
+        let user = db.user();
+        let author = db.author();
+        let moderator = db.moderator();
+        let admin = db.admin();
     }
 }
