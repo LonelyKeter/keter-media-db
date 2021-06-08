@@ -1,13 +1,17 @@
 //TODO: Remove dead_code
 #![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_variables)]
+
 extern crate tokio;
 extern crate tokio_postgres;
 extern crate keter_media_model;
 
-#[macro_use] mod db;
-mod auth;
+#[macro_use] pub mod db;
+pub mod auth;
 pub mod client;
 mod queries;
+
 
 #[cfg(test)]
 mod tests {

@@ -1,4 +1,4 @@
-#[macro_use] use super::{*};
+use super::{*};
 
 use crate::{
     auth::roles,

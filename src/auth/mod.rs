@@ -90,8 +90,24 @@ pub struct Authorizator {
     model_clients: ModelDBClients
 }
 
+impl Authorizator {
+    pub fn new(auth_client: Client<roles::Auth>, model_clients: ModelDBClients) -> Self {
+        Self {
+            auth_client,
+            model_clients
+        }
+    }
+}
+
+use keter_media_model::userinfo::UserKey;
 #[derive(Clone, Copy, Eq, PartialEq)]
-pub struct UserId(keter_media_model::userinfo::UserKey);
+pub struct UserId(UserKey);
+
+impl UserId {
+    pub fn new(key: UserKey) -> Self {
+        Self(key)
+    }
+}
 
 impl<'a> Authorizator {
     pub async fn unauthenticated_privelegies(&self) 
