@@ -5,6 +5,36 @@ use crate::{
   insert_statement
 };
 
+pub struct AuthDBBBuilder {
+  auth_db: AuthDB
+}
+
+impl AuthDBBBuilder {
+  fn new() -> Self { Self { auth_db: AuthDB::default() } }
+
+  pub fn with_auth(&mut self, cfg: &str) -> &mut Self {
+    self.auth_db.auth = cfg.to_owned();
+    self
+  }
+
+  pub fn build(self) -> AuthDB { self.auth_db }
+}
+pub struct AuthDB {
+  auth: String
+}
+
+impl AuthDB {
+  pub fn builder() -> AuthDBBBuilder {
+    AuthDBBBuilder::new()
+  }
+
+  fn default() -> Self { Self { auth: String::default() } }
+
+  pub async fn auth(&self) -> Result<Client<roles::Auth>, tokio_postgres::Error> {
+    Client::new(&self.auth).await
+  }
+}
+
 use keter_media_model::userinfo::UserKey;
 
 //TODO: remove auth imports (maybe)

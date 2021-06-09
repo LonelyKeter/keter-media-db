@@ -14,13 +14,6 @@ use tokio_postgres::{Statement, Row};
 
 impl Client<roles::Admin> {
     //TODO: Remove review DB logic
-    async fn remove_review(&self, search_key: &MediaSearchKey, review: &Review) -> ResultPostOne {
-        todo!()
-    }
-    
-    async fn get_author_contacts(&self, author: String) -> ResultGetOne<AuthorContacts> {
-        todo!()
-    }
 }
 
 use crate::insert_statement;

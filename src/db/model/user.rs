@@ -11,11 +11,19 @@ use keter_media_model::{
 };
 
 impl Client<roles::User> {
-    async fn post_review(&self, search_key: &MediaSearchKey, review: &Review) -> ResultPostOne {
+    pub async fn post_review(&self, user_id: UserKey, search_key: &MediaSearchKey, review: &Review) -> ResultPostOne {
         todo!()
     }
 
-    async fn get_author_contacts(&self, author: String) -> ResultGetOne<AuthorContacts> {
+    pub async fn get_author_contacts_named(&self, author: String) -> ResultGetOne<Option<AuthorContacts>> {
+        todo!()
+    }
+
+    pub async fn get_info(&self, user_id: UserKey) -> ResultGetOne<Option<UserInfo>> {
+        todo!()
+    }
+
+    pub async fn get_privelegies(&self, user_id: UserKey) -> ResultGetOne<Option<UserPrivelegies>> {
         todo!()
     }
 }

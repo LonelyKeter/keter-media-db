@@ -1,3 +1,7 @@
+mod unauthenticated;
+mod user;
+mod moderator;
+
 use crate::client::{
     Client,
     ClientError
@@ -74,7 +78,7 @@ pub struct ModelDBClients {
 
 use crate::db::ModelDB;
 impl ModelDBClients {
-    async fn from_model_db(model_db: &ModelDB) -> Result<Self, tokio_postgres::Error> {
+    pub async fn from_model_db(model_db: &ModelDB) -> Result<Self, tokio_postgres::Error> {
         Ok(Self {
             unauthenticated: model_db.unauthenticated().await?,
             user: model_db.user().await?,
@@ -158,8 +162,8 @@ pub struct Privelegies<R: Role> {
 impl<R: Role> Privelegies<R> {
     fn new(user_id: Option<UserId>, client: Client<R>) -> Self {
         Self {
-            user_id: user_id,
-            client: client,
+            user_id,
+            client,
             _role: PhantomData
         }
     }

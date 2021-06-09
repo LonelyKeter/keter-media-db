@@ -12,13 +12,6 @@ use crate::{
 
 pub use model::{ModelDB, ModelDBBuilder};
 
-
-
-#[cfg(feature = "auth")]
-pub struct AuthDB {
-  
-}
-
 use tokio_postgres::{Statement, types::ToSql};
 async fn get_many<T: FromQueryRow>(
   client: &PostgresClient, 
@@ -77,12 +70,17 @@ macro_rules! insert_statement {
   }
 }
 
-type ResultGetOne<T> = Result<T, ClientError>;
-type ResultGetMany<T> = Result<Vec<T>, ClientError>;
+pub use result::*;
+pub mod result {
+  use super::*;
 
-type ResultPostOne = Result<(), ClientError>;
-type ResultPostMany<T> = Result<Vec<T>, ClientError>;
-
-type ResultDeleteOne = Result<(), ClientError>;
-
-type ResultUpdateOne<Ret> = Result<Ret, ClientError>;
+  pub type ResultGetOne<T> = Result<T, ClientError>;
+  pub type ResultGetMany<T> = Result<Vec<T>, ClientError>;
+  
+  pub type ResultPostOne = Result<(), ClientError>;
+  pub type ResultPostMany<T> = Result<Vec<T>, ClientError>;
+  
+  pub type ResultDeleteOne = Result<(), ClientError>;
+  
+  pub type ResultUpdateOne<Ret> = Result<Ret, ClientError>;  
+}

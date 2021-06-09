@@ -50,6 +50,7 @@ impl<R: Role + InitStatements> Client<R> {
   }
 }
 
+#[derive(Debug)]
 pub enum ClientError {
   Postgres(tokio_postgres::Error), 
   Parse(FromQueryRowError)
