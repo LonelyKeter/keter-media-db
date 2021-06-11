@@ -24,11 +24,6 @@ pub struct IdPassword {
 }
 
 //TODO: Move to model crate
-pub struct RegistrationInfo {
-    login: String,
-    password: String,
-    mail: String
-}
 
 impl Authenticator {
     pub async fn authenticate(&self, info: AuthenticationInfo) 
