@@ -3,10 +3,6 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 
-extern crate tokio;
-extern crate tokio_postgres;
-extern crate keter_media_model;
-
 #[macro_use] pub mod db;
 pub mod auth;
 pub mod client;

@@ -35,15 +35,13 @@ impl AuthDB {
   }
 }
 
-use keter_media_model::userinfo::UserKey;
-
-//TODO: remove auth imports (maybe)
+use keter_media_model::userinfo::*;
 impl Client<roles::Auth> {
-  pub async fn register_user(&self, info: auth::RegistrationInfo) -> ResultPostOne {
+  pub async fn register_user(&self, info: RegisterData) -> ResultPostOne {
     unimplemented!()
   }
 
-  pub async fn get_user_id_password(&self, login: &str) -> ResultGetOne<Option<auth::IdPassword>> {
+  pub async fn get_user_key_password(&self, login_key: &str) -> ResultGetOne<Option<auth::IdPassword>> {
     unimplemented!()
   }
 

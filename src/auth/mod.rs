@@ -7,11 +7,7 @@ use crate::client::{
     ClientError
 };
 use roles::Role;
-
-pub struct AuthenticationInfo {
-    login: String,
-    password: String
-}
+use keter_media_model::userinfo::UserKey;
 
 use sha2::{Sha256, Digest}; 
 pub struct Authenticator {
@@ -19,16 +15,15 @@ pub struct Authenticator {
 }
 
 pub struct IdPassword {
-    id: UserId,
+    id: UserKey,
     password_hash: [u8; 32]
 }
 
-//TODO: Move to model crate
-
+use keter_media_model::userinfo::{LoginData, RegisterData};
 impl Authenticator {
-    pub async fn authenticate(&self, info: AuthenticationInfo) 
-        -> Result<UserId, AuthenticationError> {
-        if let Some(id_password) = self.client.get_user_id_password(&info.login).await? {
+    pub async fn authenticate(&self, info: LoginData) 
+        -> Result<UserKey, AuthenticationError> {
+        if let Some(id_password) = self.client.get_user_key_password(&info.email).await? {
             let computed = Sha256::digest(info.password.as_bytes());
 
             if computed.as_slice().eq(&id_password.password_hash) {
@@ -41,7 +36,7 @@ impl Authenticator {
         }
     }
 
-    pub async fn register(&self, info: RegistrationInfo) 
+    pub async fn register(&self, info: RegisterData) 
         -> Result<(), AuthenticationError> {
         //TODO: corectness checks
         self.client.register_user(info).await?;
@@ -98,15 +93,7 @@ impl Authorizator {
     }
 }
 
-use keter_media_model::userinfo::UserKey;
-#[derive(Clone, Copy, Eq, PartialEq)]
-pub struct UserId(UserKey);
 
-impl UserId {
-    pub fn new(key: UserKey) -> Self {
-        Self(key)
-    }
-}
 
 impl<'a> Authorizator {
     pub async fn unauthenticated_privelegies(&self) 
@@ -114,33 +101,33 @@ impl<'a> Authorizator {
             Ok(Privelegies::new(None, self.model_clients.unauthenticated.clone()))
     }
 
-    pub async fn user_privelegies(&self, user_id: UserId) 
+    pub async fn user_privelegies(&self, user_key: UserKey) 
         -> AuthorizationResult<Privelegies<roles::User>> {
-        Ok(Privelegies::new(Some(user_id), self.model_clients.user.clone()))
+        Ok(Privelegies::new(Some(user_key), self.model_clients.user.clone()))
     }
 
-    pub async fn author_privelegies(&self, user_id: UserId)
+    pub async fn author_privelegies(&self, user_key: UserKey)
         -> AuthorizationResult<Privelegies<roles::Author>> {
-        if let Some(true) = self.auth_client.has_author_permission(user_id.0).await? {
-            Ok(Privelegies::new(Some(user_id), self.model_clients.author.clone()))
+        if let Some(true) = self.auth_client.has_author_permission(user_key).await? {
+            Ok(Privelegies::new(Some(user_key), self.model_clients.author.clone()))
         } else {
             Err(AuthorizationError::NoAccess)
         }
     }
 
-    pub async fn moderator_privelegies(&self, user_id: UserId) 
+    pub async fn moderator_privelegies(&self, user_key: UserKey) 
         -> AuthorizationResult<Privelegies<roles::Moderator>> {
-        if let Some(true) = self.auth_client.has_moderator_permission(user_id.0).await? {
-            Ok(Privelegies::new(Some(user_id), self.model_clients.moderator.clone()))
+        if let Some(true) = self.auth_client.has_moderator_permission(user_key).await? {
+            Ok(Privelegies::new(Some(user_key), self.model_clients.moderator.clone()))
         } else {
             Err(AuthorizationError::NoAccess)
         }
     }
 
-    pub async fn admin_privelegies(&self, user_id: UserId) 
+    pub async fn admin_privelegies(&self, user_key: UserKey) 
         -> AuthorizationResult<Privelegies<roles::Admin>> {
-        if let Some(true) = self.auth_client.has_admin_permission(user_id.0).await? {
-            Ok(Privelegies::new(Some(user_id), self.model_clients.admin.clone()))
+        if let Some(true) = self.auth_client.has_admin_permission(user_key).await? {
+            Ok(Privelegies::new(Some(user_key), self.model_clients.admin.clone()))
         } else {
             Err(AuthorizationError::NoAccess)
         }
@@ -149,15 +136,15 @@ impl<'a> Authorizator {
 
 use std::marker::PhantomData;
 pub struct Privelegies<R: Role> {
-    user_id: Option<UserId>,
+    user_key: Option<UserKey>,
     client: Client<R>,
     _role: PhantomData<R>
 }
 
 impl<R: Role> Privelegies<R> {
-    fn new(user_id: Option<UserId>, client: Client<R>) -> Self {
+    fn new(user_key: Option<UserKey>, client: Client<R>) -> Self {
         Self {
-            user_id,
+            user_key,
             client,
             _role: PhantomData
         }
