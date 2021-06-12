@@ -19,12 +19,16 @@ impl Client<roles::Registered> {
     }
 
     pub async fn get_info(&self, user_id: UserKey) -> ResultGetOne<Option<UserInfo>> {
-        todo!()
+          
     }
 
     pub async fn get_privelegies(&self, user_id: UserKey) -> ResultGetOne<Option<UserPrivelegies>> {
         todo!()
     }
+}
+
+mod statements {
+    pub const GET_INFO: &str = "get_info";
 }
 
 use crate::insert_statement;

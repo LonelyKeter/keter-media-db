@@ -73,9 +73,7 @@ impl Client<roles::Auth> {
 
     let result = self.client().query_opt(
       statement, 
-      &[&email]).await?;
-    
-    eprintln!("{:?}", result);
+      &[&email]).await?;    
 
     if let Some(row) = result {
       let id_password = UserIdPassHash::from_row(&row)?;

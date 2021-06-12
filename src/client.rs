@@ -8,6 +8,7 @@ use crate::{
     auth::roles::*,
 };
 
+use postgres_types::ToSql;
 use tokio_postgres::{Statement, Config};
 
 pub(crate) type StatementCollection = HashMap<&'static str, Statement>;
@@ -19,6 +20,7 @@ pub struct Client<R: Role> {
   _role: PhantomData<R>
 }
 
+use postgres_query::FromSqlRow;
 impl<R: Role> Client<R> {
   #[inline(always)]
   pub(crate) fn client(&self) -> &PostgresClient {
@@ -28,7 +30,25 @@ impl<R: Role> Client<R> {
   pub(crate) fn statements(&self) -> &StatementCollection {
     &self.statements
   }
+
+  pub(crate) async fn query_opt<T: FromSqlRow>(&self, statement_key: &'static str, params: &[&(dyn ToSql + Sync)]) -> Result<Option<T>, ClientError> {
+    use postgres_query::extract::FromSqlRow;
+    let statement = self.statements().get(statement_key).unwrap();
+
+    let result = self.client().query_opt(
+      statement, 
+      params).await?;    
+
+    if let Some(row) = result {
+      let value = T::from_row(&row)?;
+    
+      Ok(Some(value))
+    } else {
+      Err(ClientError::NoValue)
+    }    
+  }
 }
+
 
 unsafe impl<R: Role> Send for Client<R> { }
 unsafe impl<R: Role> Sync for Client<R> { }
