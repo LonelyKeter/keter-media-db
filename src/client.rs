@@ -9,7 +9,7 @@ use crate::{
     queries::FromQueryRowError
 };
 
-use tokio_postgres::Statement;
+use tokio_postgres::{Statement, Config};
 
 pub(crate) type StatementCollection = HashMap<&'static str, Statement>;
 
@@ -36,14 +36,14 @@ unsafe impl<R: Role> Sync for Client<R> { }
 
 use crate::db::InitStatements;
 impl<R: Role + InitStatements> Client<R> {
-  pub(crate) async fn new(config: &str) -> Result<Self, tokio_postgres::Error> {
+  pub(crate) async fn new(config: &Config) -> Result<Self, ClientError> {
     let client = Arc::new(establish_connection(config).await?);
     let statements = R::init_statements(&client).await?;
 
     Ok( 
       Self {
-        client: client,
-        statements: statements,
+        client,
+        statements,
         _role: PhantomData
       }
     )
@@ -53,7 +53,9 @@ impl<R: Role + InitStatements> Client<R> {
 #[derive(Debug)]
 pub enum ClientError {
   Postgres(tokio_postgres::Error), 
-  Parse(FromQueryRowError)
+  Parse(FromQueryRowError),
+  NoConfig,
+  NoValue
 }
 
 impl From<tokio_postgres::Error> for ClientError {

@@ -1,6 +1,6 @@
 use super::{
     Privelegies,
-    roles::User
+    roles::Registered
 };
 
 use crate::db::{
@@ -15,7 +15,7 @@ use keter_media_model::{
   userinfo::*
 };
 
-impl Privelegies<User> {
+impl Privelegies<Registered> {
     pub async fn post_review(&self, search_key: &MediaSearchKey, review: &Review) -> ResultPostOne {
         self.client.post_review(self.user_key.unwrap(), search_key, review).await
     }

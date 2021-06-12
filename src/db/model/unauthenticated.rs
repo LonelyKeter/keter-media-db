@@ -44,10 +44,7 @@ use crate::insert_statement;
 #[async_trait]
 impl InitStatements for roles::Unauthenticated {
     async fn init_statements(client: &PostgresClient) -> InitStatementsResult {
-        let mut map = StatementCollection::new();
-
-        insert_statement!(client, map, "unauthenticated", "get_media_many");
-        insert_statement!(client, map, "unauthenticated", "get_media_filtered");
-        unimplemented!();
+        let mut statemnets = StatementCollection::new();
+        Ok(statemnets)
     }
 }

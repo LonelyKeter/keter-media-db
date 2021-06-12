@@ -1,5 +1,5 @@
 mod unauthenticated;
-mod user;
+mod registered;
 mod moderator;
 
 use crate::client::{
@@ -60,7 +60,7 @@ impl From<ClientError> for AuthenticationError {
 
 pub struct ModelDBClients {
     unauthenticated: Client<roles::Unauthenticated>,
-    user: Client<roles::User>,
+    user: Client<roles::Registered>,
     author: Client<roles::Author>,
     moderator: Client<roles::Moderator>,
     admin: Client<roles::Admin>,
@@ -68,10 +68,10 @@ pub struct ModelDBClients {
 
 use crate::db::ModelDB;
 impl ModelDBClients {
-    pub async fn from_model_db(model_db: &ModelDB) -> Result<Self, tokio_postgres::Error> {
+    pub async fn from_model_db(model_db: &ModelDB) -> Result<Self, ClientError> {
         Ok(Self {
             unauthenticated: model_db.unauthenticated().await?,
-            user: model_db.user().await?,
+            user: model_db.registered().await?,
             author: model_db.author().await?,
             moderator: model_db.moderator().await?,
             admin: model_db.admin().await?,
@@ -102,7 +102,7 @@ impl<'a> Authorizator {
     }
 
     pub async fn user_privelegies(&self, user_key: UserKey) 
-        -> AuthorizationResult<Privelegies<roles::User>> {
+        -> AuthorizationResult<Privelegies<roles::Registered>> {
         Ok(Privelegies::new(Some(user_key), self.model_clients.user.clone()))
     }
 
@@ -166,8 +166,8 @@ pub mod roles
         impl Role for Unauthenticated {}
         
         #[derive(Clone)]
-        pub struct User;
-        impl Role for User {}
+        pub struct Registered;
+        impl Role for Registered {}
         
         #[derive(Clone)]
         pub struct Author;

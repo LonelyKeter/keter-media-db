@@ -21,7 +21,10 @@ path = "../keter-media-model"
 features = ["postgres_query"]
 
 [dependencies]
-tokio = {version = "1", features = ["rt"] }
+tokio = {version = "1", features = ["rt", "macros"] }
 postgres_query = { version = "0.3" }
 async-trait = {version = "0.1.50"}
-sha2 = { version = "0.9.5", optional = true}
+sha2 = { version = "0.9.5", optional = true }
+lazy_static = "1.4.0"
+postgres-types = { version = "0.2.1", features = ["derive"] }
+hex = { version = "0.4.3"}

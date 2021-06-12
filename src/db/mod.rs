@@ -11,6 +11,7 @@ use crate::{
 };
 
 pub use model::{ModelDB, ModelDBBuilder};
+pub use auth::{AuthDB, AuthDBBBuilder};
 
 use tokio_postgres::{Statement, types::ToSql};
 async fn get_many<T: FromQueryRow>(
@@ -44,10 +45,11 @@ fn rows_to_vec<'a, T: FromQueryRow>(rows: impl Iterator<Item = &'a Row>) -> Resu
 pub(crate) type PostgresClient = tokio_postgres::Client;
 
 //TODO: Proper error logging
-pub(crate) async fn establish_connection(config: &str) -> Result<PostgresClient, tokio_postgres::Error> {
+use tokio_postgres::Config;
+pub(crate) async fn establish_connection(config: &Config) -> Result<PostgresClient, tokio_postgres::Error> {
   use tokio_postgres::{connect, NoTls};
 
-  let (client, connection) = connect(config, NoTls).await?;
+  let (client, connection) = config.connect(NoTls).await?;
   tokio::spawn(async move {
     connection.await;
   });
@@ -83,4 +85,11 @@ pub mod result {
   pub type ResultDeleteOne = Result<(), ClientError>;
   
   pub type ResultUpdateOne<Ret> = Result<Ret, ClientError>;  
+}
+
+mod domain_types {
+  use postgres_types::{ToSql, FromSql};
+
+  #[derive(Debug, ToSql, FromSql)]
+  pub struct Email(pub String);
 }

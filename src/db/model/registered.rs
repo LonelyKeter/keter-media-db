@@ -10,7 +10,7 @@ use keter_media_model::{
     userinfo::*
 };
 
-impl Client<roles::User> {
+impl Client<roles::Registered> {
     pub async fn post_review(&self, user_id: UserKey, search_key: &MediaSearchKey, review: &Review) -> ResultPostOne {
         todo!()
     }
@@ -30,8 +30,9 @@ impl Client<roles::User> {
 
 use crate::insert_statement;
 #[async_trait]
-impl InitStatements for roles::User {
+impl InitStatements for roles::Registered {
     async fn init_statements(client: &PostgresClient) -> InitStatementsResult {
-        unimplemented!();
+        let mut statemnets = StatementCollection::new();
+        Ok(statemnets)
     }
 }

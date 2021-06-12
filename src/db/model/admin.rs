@@ -20,6 +20,7 @@ use crate::insert_statement;
 #[async_trait]
 impl InitStatements for roles::Admin {
   async fn init_statements(client: &PostgresClient) -> InitStatementsResult {
-    unimplemented!();
+    let mut statemnets = StatementCollection::new();
+        Ok(statemnets)
   }
 }
