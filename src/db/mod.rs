@@ -13,35 +13,6 @@ use crate::{
 pub use model::{ModelDB, ModelDBBuilder};
 pub use auth::{AuthDB, AuthDBBBuilder};
 
-use tokio_postgres::{Statement, types::ToSql};
-async fn get_many<T: FromQueryRow>(
-  client: &PostgresClient, 
-  statement: &Statement, params: &[&(dyn Sync + ToSql)]
-)-> Result<Vec<T>, ClientError>{
-  let rows = client.query(statement, params).await?;
-  let result = rows_to_vec(rows.iter())?;        
-  Ok(result)
-}
-
-async fn get_one<T: FromQueryRow>(
-  client: &PostgresClient, 
-  statement: &Statement, params: &[&(dyn Sync + ToSql)]
-)-> Result<T, ClientError>{
-  let row = client.query_one(statement, params).await?;
-  let result = T::from_query_row(&row)?;        
-  Ok(result)
-}
-
-
-use tokio_postgres::Row;
-use crate::queries::{FromQueryRow, FromQueryRowError};
-fn rows_to_vec<'a, T: FromQueryRow>(rows: impl Iterator<Item = &'a Row>) -> Result<Vec<T>, FromQueryRowError> {
-  rows.
-  map(T::from_query_row)
-  .collect()
-}
-
-
 pub(crate) type PostgresClient = tokio_postgres::Client;
 
 //TODO: Proper error logging
@@ -87,7 +58,7 @@ pub mod result {
   pub type ResultUpdateOne<Ret> = Result<Ret, ClientError>;  
 }
 
-mod domain_types {
+pub mod domain_types {
   use postgres_types::{ToSql, FromSql};
 
   #[derive(Debug, ToSql, FromSql)]

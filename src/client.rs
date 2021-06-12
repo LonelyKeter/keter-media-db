@@ -6,7 +6,6 @@ use crate::{
         establish_connection
     },
     auth::roles::*,
-    queries::FromQueryRowError
 };
 
 use tokio_postgres::{Statement, Config};
@@ -53,7 +52,7 @@ impl<R: Role + InitStatements> Client<R> {
 #[derive(Debug)]
 pub enum ClientError {
   Postgres(tokio_postgres::Error), 
-  Parse(FromQueryRowError),
+  Parse(postgres_query::extract::Error),
   NoConfig,
   NoValue
 }
@@ -64,8 +63,8 @@ impl From<tokio_postgres::Error> for ClientError {
   }
 }
 
-impl From<FromQueryRowError> for ClientError {
-  fn from(other: FromQueryRowError) -> ClientError {
+impl From<postgres_query::extract::Error> for ClientError {
+  fn from(other: postgres_query::extract::Error) -> ClientError {
     ClientError::Parse(other)
   }
 }

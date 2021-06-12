@@ -2,13 +2,14 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(unused_variables)]
+#![allow(unused_mut)]
+#![allow(unused_must_use)]
 
 
 
 #[macro_use] pub mod db;
 pub mod auth;
 pub mod client;
-mod queries;
 
 pub mod default {
     use tokio_postgres::Config;
@@ -117,12 +118,30 @@ mod tests {
         let db = db::AuthDB::default();
         let auth = db.auth().await.expect("auth connection failed");
 
-        auth.register_user(RegisterData { 
-            user_name: "Second user".to_owned(),
-            login_data: LoginData { 
-                email: "seconduser@mail.com".to_owned(), 
-                password: "263c33a2a9431fc185a3da10a199b36aadad10c59eaf10beca8b54684171ba0c".to_owned()
-            }
-        }).await.expect("Failed to register user");
+        auth.register_user("Second user",  
+        &hex::decode("263c33a2a9431fc185a3da10a199b36aadad10c59eaf10beca8b54684171ba0c").unwrap(),
+        &"seconduser@mail.com".to_owned()
+        ).await.expect("Failed to register user");
+    }
+
+    #[tokio::test]
+    async fn authenticator() {
+        use keter_media_model::userinfo::{RegisterData, LoginData};
+        use auth::Authenticator;
+        let db = db::AuthDB::default();
+        let auth = Authenticator::new(db.auth().await.expect("auth connection failed"));
+
+        let login_d = LoginData { 
+            email: "thirduser@mail.com".to_owned(), 
+            password: "Third user".to_owned()
+        };
+
+        let reg_d = RegisterData {
+            user_name: "Third user".to_owned(),
+            login_data: login_d.clone()
+        };
+
+        auth.register(reg_d).await.expect("Failed to register third user");
+        auth.authenticate(login_d).await.expect("Failed to login");
     }
 }

@@ -2,7 +2,6 @@ use super::{*};
 
 use crate::{
     auth::roles,
-    queries::{FromQueryRow, FromQueryRowError}
     };
 
 use keter_media_model::{

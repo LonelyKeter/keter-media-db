@@ -5,6 +5,7 @@ use crate::{
   insert_statement
 };
 
+use postgres_query::FromSqlRow;
 use tokio_postgres::Config;
 pub struct AuthDBBBuilder {
   auth_db: AuthDB
@@ -52,13 +53,12 @@ impl AuthDB {
 
 use keter_media_model::userinfo::*;
 impl Client<roles::Auth> {
-  pub async fn register_user(&self, info: RegisterData) -> ResultPostOne {
-    let statement = self.statements().get("register_user").unwrap();
-    let email = domain_types::Email(info.login_data.email);
+  pub async fn register_user(&self, login: &str, password: &[u8], email: &str) -> ResultPostOne {
+    let statement = self.statements().get(statements::REGISTER_USER).unwrap();
 
     let result = self.client().query_opt(
       statement, 
-      &[&info.user_name, &info.login_data.password, &email]).await?;
+      &[&login, &password, &email]).await?;
     
     if let Some(_) = result {
         Ok(())
@@ -67,8 +67,23 @@ impl Client<roles::Auth> {
     }
   }
 
-  pub async fn get_user_key_password(&self, login_key: &str) -> ResultGetOne<Option<auth::IdPassword>> {
-    unimplemented!()
+  pub async fn get_user_key_password(&self, email: &str) -> ResultGetOne<Option<UserIdPassHash>> {
+    use postgres_query::extract::FromSqlRow;
+    let statement = self.statements().get(statements::GET_USER_KEY_PASSWORD).unwrap();
+
+    let result = self.client().query_opt(
+      statement, 
+      &[&email]).await?;
+    
+    eprintln!("{:?}", result);
+
+    if let Some(row) = result {
+      let id_password = UserIdPassHash::from_row(&row)?;
+    
+      Ok(Some(id_password))
+    } else {
+      Err(ClientError::NoValue)
+    }    
   }
 
   pub async fn has_author_permission(&self, user_key: UserKey) -> ResultGetOne<Option<bool>> {
@@ -84,6 +99,11 @@ impl Client<roles::Auth> {
   }
 }
 
+mod statements {
+  pub const REGISTER_USER: &str = "register_user";
+  pub const GET_USER_KEY_PASSWORD: &str = "get_user_key_password";
+}
+
 #[async_trait]
 impl InitStatements for roles::Auth {
   async fn init_statements(client: &PostgresClient) -> InitStatementsResult {
@@ -93,6 +113,11 @@ impl InitStatements for roles::Auth {
     statemnets.insert(
       "register_user", 
       client.prepare(include_str!("sql\\register_user.sql")).await?
+      );
+
+    statemnets.insert(
+      "get_user_key_password", 
+      client.prepare(include_str!("sql\\get_user_key_password.sql")).await?
       );
 
     

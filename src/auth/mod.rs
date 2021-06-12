@@ -14,13 +14,14 @@ pub struct Authenticator {
     client: Client<roles::Auth>,
 }
 
-pub struct IdPassword {
-    id: UserKey,
-    password_hash: [u8; 32]
-}
+
 
 use keter_media_model::userinfo::{LoginData, RegisterData};
 impl Authenticator {
+    pub fn new(client: Client<roles::Auth>) -> Self {
+        Self { client }
+    }
+
     pub async fn authenticate(&self, info: LoginData) 
         -> Result<UserKey, AuthenticationError> {
         if let Some(id_password) = self.client.get_user_key_password(&info.email).await? {
@@ -36,17 +37,26 @@ impl Authenticator {
         }
     }
 
-    pub async fn register(&self, info: RegisterData) 
+    pub async fn register(&self, register: RegisterData) 
         -> Result<(), AuthenticationError> {
         //TODO: corectness checks
-        self.client.register_user(info).await?;
+        Self::check_registration_correctness(&register)?;
+        let password = Sha256::digest(register.login_data.password.as_bytes());
+        let email = register.login_data.email;
 
+        self.client.register_user(&register.user_name, &password, &email).await?;
+
+        Ok(())
+    }
+
+    fn check_registration_correctness(register: &RegisterData) -> Result<(), AuthenticationError> {
         Ok(())
     }
 }
 
+#[derive(Debug)]
 pub enum AuthenticationError{
-    DbError,
+    ClientError(ClientError),
     NoUser,
     InvalidPassword,
     NameAlreadyTaken
@@ -54,7 +64,7 @@ pub enum AuthenticationError{
 
 impl From<ClientError> for AuthenticationError {
     fn from(other: ClientError) -> Self {
-        Self::DbError
+        Self::ClientError(other)
     }
 }
 

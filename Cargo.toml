@@ -22,7 +22,7 @@ features = ["postgres_query"]
 
 [dependencies]
 tokio = {version = "1", features = ["rt", "macros"] }
-postgres_query = { version = "0.3" }
+postgres_query = { path = "../postgres-query/postgres_query" }
 async-trait = {version = "0.1.50"}
 sha2 = { version = "0.9.5", optional = true }
 lazy_static = "1.4.0"
