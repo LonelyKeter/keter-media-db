@@ -30,7 +30,7 @@ pub struct ModerationSearchOptions {
 
 }
 
-use crate::insert_statement;
+
 #[async_trait]
 impl InitStatements for roles::Moderator {
     async fn init_statements(client: &PostgresClient) -> InitStatementsResult {

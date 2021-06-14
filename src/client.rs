@@ -30,8 +30,32 @@ impl<R: Role> Client<R> {
   pub(crate) fn statements(&self) -> &StatementCollection {
     &self.statements
   }
+  
+  pub(crate) async fn query<T: FromSqlRow>(&self, statement_key: &str, params: &[&(dyn ToSql + Sync)]) -> Result<Vec<T>, ClientError> {
+    use postgres_query::extract::FromSqlRow;
+    let statement = self.statements().get(statement_key).unwrap();
 
-  pub(crate) async fn query_opt<T: FromSqlRow>(&self, statement_key: &'static str, params: &[&(dyn ToSql + Sync)]) -> Result<Option<T>, ClientError> {
+    let result = self.client().query(
+      statement, 
+      params).await?;     
+
+    let values  = T::from_row_multi(&result)?;
+    Ok(values)
+  }
+
+  pub(crate) async fn query_one<T: FromSqlRow>(&self, statement_key: &str, params: &[&(dyn ToSql + Sync)]) -> Result<T, ClientError> {
+    use postgres_query::extract::FromSqlRow;
+    let statement = self.statements().get(statement_key).unwrap();
+
+    let result = self.client().query_one(
+      statement, 
+      params).await?;     
+
+    let value  = T::from_row(&result)?;
+    Ok(value)
+  }
+
+  pub(crate) async fn query_opt<T: FromSqlRow>(&self, statement_key: &str, params: &[&(dyn ToSql + Sync)]) -> Result<Option<T>, ClientError> {
     use postgres_query::extract::FromSqlRow;
     let statement = self.statements().get(statement_key).unwrap();
 
@@ -44,8 +68,19 @@ impl<R: Role> Client<R> {
     
       Ok(Some(value))
     } else {
-      Err(ClientError::NoValue)
+      Ok(None)
     }    
+  }
+
+  pub(crate) async fn execute(&self, statement_key: &str, params: &[&(dyn ToSql + Sync)]) -> Result<u64, ClientError> {
+    use postgres_query::extract::FromSqlRow;
+    let statement = self.statements().get(statement_key).unwrap();
+
+    let result = self.client().execute(
+      statement, 
+      params).await?;     
+
+    Ok(result)
   }
 }
 

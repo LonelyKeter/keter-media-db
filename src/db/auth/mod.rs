@@ -2,7 +2,6 @@ use super::*;
 
 use crate::{
   auth::{self, roles},
-  insert_statement
 };
 
 use postgres_query::FromSqlRow;

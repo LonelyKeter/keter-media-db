@@ -34,15 +34,6 @@ pub trait InitStatements {
   async fn init_statements(client: &PostgresClient) -> InitStatementsResult;
 }
 
-#[macro_export]
-macro_rules! insert_statement {
-  ($client:ident, $map:ident, $folder:literal, $key:literal) => {    
-    let statement = $client
-      .prepare(include_str!(concat!("sql/", $folder, "/", $key, ".sql"))).await?;
-    $map.insert("get_media_many", statement);    
-  }
-}
-
 pub use result::*;
 pub mod result {
   use super::*;

@@ -28,7 +28,7 @@ impl Privelegies<Registered> {
         self.client.get_info(self.user_key.unwrap()).await
     }
 
-    pub async fn get_privelegies(&self) -> ResultGetOne<Option<UserPrivelegies>> {
+    pub async fn get_privelegies(&self) -> ResultGetOne<Option<UserPriveleges>> {
         self.client.get_privelegies(self.user_key.unwrap()).await
     }
 }
