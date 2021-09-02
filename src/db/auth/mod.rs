@@ -6,6 +6,9 @@ use crate::{
 
 use postgres_query::FromSqlRow;
 use tokio_postgres::Config;
+
+use enum_map::enum_map;
+
 pub struct AuthDBBBuilder {
   auth_db: AuthDB
 }
@@ -53,34 +56,21 @@ impl AuthDB {
 use keter_media_model::userinfo::*;
 impl Client<roles::Auth> {
   pub async fn register_user(&self, login: &str, password: &[u8], email: &str) -> ResultPostOne {
-    let statement = self.statements().get(statements::REGISTER_USER).unwrap();
-
-    let result = self.client().query_opt(
-      statement, 
+    let result = self.execute(
+      Statements::RegisterUser, 
       &[&login, &password, &email]).await?;
-    
-    if let Some(_) = result {
-        Ok(())
-    } else {
-      Err(ClientError::NoValue)
-    }
+
+    Ok(())
   }
 
   pub async fn get_user_key_password(&self, email: &str) -> ResultGetOne<Option<UserIdPassHash>> {
     use postgres_query::extract::FromSqlRow;
-    let statement = self.statements().get(statements::GET_USER_KEY_PASSWORD).unwrap();
 
-    let result = self.client().query_opt(
-      statement, 
-      &[&email]).await?;    
-
-    if let Some(row) = result {
-      let id_password = UserIdPassHash::from_row(&row)?;
-    
-      Ok(Some(id_password))
-    } else {
-      Err(ClientError::NoValue)
-    }    
+    let result = self.query_opt::<UserIdPassHash>(
+      Statements::GetUserKeyPassword, 
+      &[&email]).await?;   
+      
+    Ok(result)
   }
 
   pub async fn has_author_permission(&self, user_key: UserKey) -> ResultGetOne<Option<bool>> {
@@ -96,28 +86,22 @@ impl Client<roles::Auth> {
   }
 }
 
-mod statements {
-  pub const REGISTER_USER: &str = "register_user";
-  pub const GET_USER_KEY_PASSWORD: &str = "get_user_key_password";
+use enum_map::Enum;
+#[derive(Enum, Clone)]
+pub enum Statements {
+  RegisterUser,
+  GetUserKeyPassword,
 }
 
 #[async_trait]
 impl InitStatements for roles::Auth {
-  async fn init_statements(client: &PostgresClient) -> InitStatementsResult {
-    use tokio_postgres::types::Type;
-    let mut statemnets = StatementCollection::new();
-
-    statemnets.insert(
-      "register_user", 
-      client.prepare(include_str!("sql\\register_user.sql")).await?
-      );
-
-    statemnets.insert(
-      "get_user_key_password", 
-      client.prepare(include_str!("sql\\get_user_key_password.sql")).await?
-      );
-
+  type StatementKey = Statements;
+  async fn init_statements(client: &PostgresClient) -> InitStatementsResult<Statements> {
+    let statements = enum_map! {
+      Statements::RegisterUser => client.prepare(include_str!("sql\\register_user.sql")).await?,
+      Statements::GetUserKeyPassword => client.prepare(include_str!("sql\\get_user_key_password.sql")).await?,
+    };
     
-    Ok(statemnets)
+    Ok(statements)
   }
 }

@@ -16,7 +16,7 @@ pub use auth::{AuthDB, AuthDBBBuilder};
 pub(crate) type PostgresClient = tokio_postgres::Client;
 
 //TODO: Proper error logging
-use tokio_postgres::Config;
+use tokio_postgres::{Config, Statement};
 pub(crate) async fn establish_connection(config: &Config) -> Result<PostgresClient, tokio_postgres::Error> {
   use tokio_postgres::{connect, NoTls};
 
@@ -28,10 +28,11 @@ pub(crate) async fn establish_connection(config: &Config) -> Result<PostgresClie
   Ok(client)
 }
 
-type InitStatementsResult = Result<StatementCollection, tokio_postgres::Error>;
+type InitStatementsResult<TKey> = Result<StatementCollection<TKey>, tokio_postgres::Error>;
 #[async_trait]
 pub trait InitStatements {
-  async fn init_statements(client: &PostgresClient) -> InitStatementsResult;
+  type StatementKey: enum_map::Enum<Statement>;
+  async fn init_statements(client: &PostgresClient) -> InitStatementsResult<Self::StatementKey>;
 }
 
 pub use result::*;

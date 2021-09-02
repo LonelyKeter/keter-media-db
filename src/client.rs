@@ -1,4 +1,5 @@
 use std::{marker::PhantomData, sync::{Arc}, collections::HashMap};
+use enum_map::EnumMap;
 
 use crate::{
     db::{
@@ -9,31 +10,30 @@ use crate::{
 };
 
 use postgres_types::ToSql;
-use tokio_postgres::{Statement, Config};
+use tokio_postgres::{Config, Statement};
 
-pub(crate) type StatementCollection = HashMap<&'static str, Statement>;
+pub(crate) type StatementCollection<TKey> = EnumMap<TKey, Statement>;
 
-#[derive(Clone)]
-pub struct Client<R: Role> {
+pub struct Client<R: Role + InitStatements> { 
   client: Arc<PostgresClient>,
-  statements: HashMap<&'static str, Statement>,
+  statements: StatementCollection<R::StatementKey>,
   _role: PhantomData<R>
 }
 
 use postgres_query::FromSqlRow;
-impl<R: Role> Client<R> {
+impl<R: Role + InitStatements> Client<R> {
   #[inline(always)]
   pub(crate) fn client(&self) -> &PostgresClient {
     &self.client
   }
 
-  pub(crate) fn statements(&self) -> &StatementCollection {
+  pub(crate) fn statements(&self) -> &StatementCollection<R::StatementKey> {
     &self.statements
   }
   
-  pub(crate) async fn query<T: FromSqlRow>(&self, statement_key: &str, params: &[&(dyn ToSql + Sync)]) -> Result<Vec<T>, ClientError> {
+  pub(crate) async fn query<T: FromSqlRow>(&self, statement_key: R::StatementKey, params: &[&(dyn ToSql + Sync)]) -> Result<Vec<T>, ClientError> {
     use postgres_query::extract::FromSqlRow;
-    let statement = self.statements().get(statement_key).unwrap();
+    let statement = &self.statements[statement_key];
 
     let result = self.client().query(
       statement, 
@@ -43,9 +43,9 @@ impl<R: Role> Client<R> {
     Ok(values)
   }
 
-  pub(crate) async fn query_one<T: FromSqlRow>(&self, statement_key: &str, params: &[&(dyn ToSql + Sync)]) -> Result<T, ClientError> {
+  pub(crate) async fn query_one<T: FromSqlRow>(&self, statement_key: R::StatementKey, params: &[&(dyn ToSql + Sync)]) -> Result<T, ClientError> {
     use postgres_query::extract::FromSqlRow;
-    let statement = self.statements().get(statement_key).unwrap();
+    let statement = &self.statements[statement_key];
 
     let result = self.client().query_one(
       statement, 
@@ -55,9 +55,9 @@ impl<R: Role> Client<R> {
     Ok(value)
   }
 
-  pub(crate) async fn query_opt<T: FromSqlRow>(&self, statement_key: &str, params: &[&(dyn ToSql + Sync)]) -> Result<Option<T>, ClientError> {
+  pub(crate) async fn query_opt<T: FromSqlRow>(&self, statement_key: R::StatementKey, params: &[&(dyn ToSql + Sync)]) -> Result<Option<T>, ClientError> {
     use postgres_query::extract::FromSqlRow;
-    let statement = self.statements().get(statement_key).unwrap();
+    let statement = &self.statements[statement_key];
 
     let result = self.client().query_opt(
       statement, 
@@ -72,9 +72,9 @@ impl<R: Role> Client<R> {
     }    
   }
 
-  pub(crate) async fn execute(&self, statement_key: &str, params: &[&(dyn ToSql + Sync)]) -> Result<u64, ClientError> {
+  pub(crate) async fn execute(&self, statement_key: R::StatementKey, params: &[&(dyn ToSql + Sync)]) -> Result<u64, ClientError> {
     use postgres_query::extract::FromSqlRow;
-    let statement = self.statements().get(statement_key).unwrap();
+    let statement = &self.statements[statement_key];
 
     let result = self.client().execute(
       statement, 
@@ -84,9 +84,21 @@ impl<R: Role> Client<R> {
   }
 }
 
+impl<R> Clone for Client<R> 
+  where R: Role + InitStatements,
+  EnumMap<<R as InitStatements>::StatementKey, Statement>: Clone
+{
+  fn clone(&self) -> Self {
+      Self {
+        client: self.client.clone(),
+        statements: self.statements.clone(),
+        _role: PhantomData
+      }
+  }
+}
 
-unsafe impl<R: Role> Send for Client<R> { }
-unsafe impl<R: Role> Sync for Client<R> { }
+unsafe impl<R: Role + InitStatements> Send for Client<R> { }
+unsafe impl<R: Role + InitStatements> Sync for Client<R> { }
 
 use crate::db::InitStatements;
 impl<R: Role + InitStatements> Client<R> {

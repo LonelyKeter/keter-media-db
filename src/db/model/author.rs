@@ -62,11 +62,22 @@ impl Client<roles::Author> {
     }
 }
 
+use enum_map::{Enum, enum_map};
+#[derive(Enum, Clone, Copy)]
+pub enum Statements {
+
+}
+
 
 #[async_trait]
 impl InitStatements for roles::Author {
-    async fn init_statements(client: &PostgresClient) -> InitStatementsResult {
-        let mut statemnets = StatementCollection::new();
-        Ok(statemnets)
+    type StatementKey = Statements;
+
+    async fn init_statements(client: &PostgresClient) -> InitStatementsResult<Statements> {
+        let statements = enum_map! {
+
+        };
+
+        Ok(statements)
     }
 }

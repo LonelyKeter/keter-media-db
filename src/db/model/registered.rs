@@ -1,4 +1,4 @@
-use self::statements::*;
+use enum_map::enum_map;
 
 use super::{*};
 
@@ -14,11 +14,11 @@ use keter_media_model::{
 impl Client<roles::Registered> {
     pub async fn post_review(&self, user_id: UserKey, search_key: &MediaSearchKey, review: &Review) -> ResultPostOne {
         match search_key {
-            &MediaSearchKey::Key(media_id) => self.execute(
-                POST_REVIEW_WITH_ID,
+            MediaSearchKey::Key(media_id) => self.execute(
+                Statements::PostReviewWithId,
                 &[&user_id, &media_id, &review.rating, &review.text]).await?,
-            &MediaSearchKey::TitleAuthor {title, author} =>  self.execute(
-                POST_REVIEW_WITH_TITLE_AUTHOR,
+            MediaSearchKey::TitleAuthor {title, author} =>  self.execute(
+                Statements::PostReviewWithTitleAuthor,
                 &[&user_id, &title, &author, &review.rating, &review.text]).await?,
         };
 
@@ -30,47 +30,68 @@ impl Client<roles::Registered> {
     }
 
     pub async fn get_info(&self, user_id: UserKey) -> ResultGetOne<Option<UserInfo>> {
-        self.query_opt::<UserInfo>(GET_INFO, &[&user_id]).await
+        self.query_opt::<UserInfo>(Statements::GetInfo, &[&user_id]).await
     }
 
     pub async fn get_privelegies(&self, user_id: UserKey) -> ResultGetOne<Option<UserPriveleges>> {
-        self.query_opt::<UserPriveleges>(GET_PRIVELEGES, &[&user_id]).await
+        self.query_opt::<UserPriveleges>(Statements::GetPrivelegies, &[&user_id]).await
     }
 }
 
-mod statements {
-    pub const GET_INFO: &str = "get_info";
-    pub const GET_PRIVELEGES: &str = "get_privelegies";
-    pub const POST_REVIEW_WITH_ID: &str = "post_review_with_id";
-    pub const POST_REVIEW_WITH_TITLE_AUTHOR: &str = "post_review_with_title_author";
+use enum_map::Enum;
+#[derive(Enum, Clone, Copy)]
+pub enum Statements {
+    GetInfo,
+    GetPrivelegies,
+    PostReviewWithId,
+    PostReviewWithTitleAuthor
 }
-
-
 
 #[async_trait]
 impl InitStatements for roles::Registered {
-    async fn init_statements(client: &PostgresClient) -> InitStatementsResult {
-        use statements::*;
-        let mut statements = StatementCollection::new();
+    type StatementKey = Statements;
 
-        macro_rules! insert_statement {
-            ($key:ident, $file_name:literal) => {
-                statements.insert(
-                    $key, 
-                    client.prepare(
-                        include_str!(
-                            concat!("sql/user/", $file_name)
-                        )
-                    ).await?
-                );
-            };
-        }
-
-        insert_statement!(GET_INFO, "get_info.sql");
-        insert_statement!(GET_PRIVELEGES, "get_privelegies.sql");
-        insert_statement!(POST_REVIEW_WITH_ID, "post_review_with_id.sql");
-        insert_statement!(POST_REVIEW_WITH_TITLE_AUTHOR, "post_review_with_title_author.sql");
+    async fn init_statements(client: &PostgresClient) -> InitStatementsResult<Statements> {
+        let mut statements = enum_map! {
+            Statements::GetInfo => client.prepare(include_str!("sql\\registered\\get_info.sql")).await?,
+            Statements::GetPrivelegies => client.prepare(include_str!("sql\\registered\\get_privelegies.sql")).await?,
+            Statements::PostReviewWithId => client.prepare(include_str!("sql\\registered\\post_review_with_id.sql")).await?,
+            //Actual sql code
+            Statements::PostReviewWithTitleAuthor => client.prepare(include_str!("sql\\registered\\post_review_with_id.sql")).await?,
+        };
 
         Ok(statements)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{auth::roles::Registered, client::Client, db::ModelDB};
+
+    async fn registered() -> Client<Registered> {
+        Client::new(&crate::default::DEFAULT_REGISTERED_CONFIG).await.unwrap()
+    }
+
+    #[tokio::test]
+    async fn get_info_test() {
+        let client = registered().await;
+        let info = client.get_info(1).await
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(info.id , 1); 
+        assert_eq!(info.name, "First author");
+    }
+
+    #[tokio::test]
+    async fn get_privelegies() {
+        let client = registered().await;
+        let privelegies = client.get_privelegies(1).await
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(privelegies.author, true); 
+        assert_eq!(privelegies.moderator, false); 
+        assert_eq!(privelegies.admin, false); 
     }
 }

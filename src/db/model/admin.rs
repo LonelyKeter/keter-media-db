@@ -1,5 +1,7 @@
 use super::{*};
 
+use enum_map::enum_map;
+
 use crate::{
     auth::roles,
     };
@@ -15,11 +17,21 @@ impl Client<roles::Admin> {
     //TODO: Remove review DB logic
 }
 
+use enum_map::Enum;
+#[derive(Enum, Clone, Copy)]
+pub enum Statements {
+
+}
 
 #[async_trait]
 impl InitStatements for roles::Admin {
-  async fn init_statements(client: &PostgresClient) -> InitStatementsResult {
-    let mut statemnets = StatementCollection::new();
-        Ok(statemnets)
-  }
+    type StatementKey = Statements;
+    
+    async fn init_statements(client: &PostgresClient) -> InitStatementsResult<Statements> {
+        let mut statements = enum_map! {
+
+        };
+
+        Ok(statements)
+    }
 }

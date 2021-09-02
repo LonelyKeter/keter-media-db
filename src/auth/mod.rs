@@ -2,10 +2,10 @@ mod unauthenticated;
 mod registered;
 mod moderator;
 
-use crate::client::{
+use crate::{client::{
     Client,
     ClientError
-};
+}, db::InitStatements};
 use roles::Role;
 use keter_media_model::userinfo::UserKey;
 
@@ -145,13 +145,13 @@ impl<'a> Authorizator {
 }
 
 use std::marker::PhantomData;
-pub struct Privelegies<R: Role> {
+pub struct Privelegies<R: Role + InitStatements> {
     user_key: Option<UserKey>,
     client: Client<R>,
     _role: PhantomData<R>
 }
 
-impl<R: Role> Privelegies<R> {
+impl<R: Role + InitStatements> Privelegies<R> {
     fn new(user_key: Option<UserKey>, client: Client<R>) -> Self {
         Self {
             user_key,

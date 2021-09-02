@@ -9,6 +9,7 @@ use keter_media_model::{
     userinfo::*
 };
 
+
 impl Client<roles::Unauthenticated> {
     pub async fn get_media_many(&self) -> ResultGetMany<MediaInfo> {
         todo!()
@@ -40,10 +41,22 @@ pub struct GetMediaOptions {
 }
 
 
+use enum_map::{Enum, enum_map};
+#[derive(Enum, Clone, Copy)]
+pub enum Statements {
+
+}
+
+
 #[async_trait]
 impl InitStatements for roles::Unauthenticated {
-    async fn init_statements(client: &PostgresClient) -> InitStatementsResult {
-        let mut statemnets = StatementCollection::new();
-        Ok(statemnets)
+    type StatementKey = Statements;
+
+    async fn init_statements(client: &PostgresClient) -> InitStatementsResult<Statements> {
+        let mut statements = enum_map! {
+
+        };
+
+        Ok(statements)
     }
 }

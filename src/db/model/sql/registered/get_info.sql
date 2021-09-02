@@ -1,3 +1,3 @@
-SELECT Id, UserName 
+SELECT Id, Name 
   FROM Users
   WHERE Id = $1;
