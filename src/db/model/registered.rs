@@ -12,7 +12,7 @@ use keter_media_model::{
 };
 
 impl Client<roles::Registered> {
-    pub async fn post_review(&self, user_id: UserKey, search_key: &MediaSearchKey, review: &Review) -> ResultPostOne {
+    pub async fn post_review(&self, user_id: UserKey, search_key: &MediaSearchKey, review: &ReviewInfo) -> ResultPostOne {
         match search_key {
             MediaSearchKey::Key(media_id) => self.execute(
                 Statements::PostReviewWithId,

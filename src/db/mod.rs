@@ -40,6 +40,7 @@ pub mod result {
   use super::*;
 
   pub type ResultGetOne<T> = Result<T, ClientError>;
+  pub type ResultOptional<T> = Result<Option<T>, ClientError>;
   pub type ResultGetMany<T> = Result<Vec<T>, ClientError>;
   
   pub type ResultPostOne = Result<(), ClientError>;

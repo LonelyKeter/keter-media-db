@@ -16,7 +16,7 @@ use keter_media_model::{
 };
 
 impl Privelegies<Registered> {
-    pub async fn post_review(&self, search_key: &MediaSearchKey, review: &Review) -> ResultPostOne {
+    pub async fn post_review(&self, search_key: &MediaSearchKey, review: &ReviewInfo) -> ResultPostOne {
         self.client.post_review(self.user_key.unwrap(), search_key, review).await
     }
 

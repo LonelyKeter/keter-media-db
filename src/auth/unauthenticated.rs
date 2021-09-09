@@ -25,10 +25,11 @@ impl Privelegies<Unauthenticated> {
         self.client.get_media_many_with_options(options).await
     }
 
+    /*
     pub async fn get_media(&self, key: MediaKey) -> ResultGetOne<Media> {
         self.client.get_media(key).await
     }
-
+*/
     pub async fn get_authors(&self) -> ResultGetMany<AuthorInfo> {
         self.client.get_authors().await
     }
@@ -37,7 +38,7 @@ impl Privelegies<Unauthenticated> {
         self.client.get_tags().await
     }
 
-    pub async fn get_reviews(&self, search_key: MediaSearchKey) -> ResultGetMany<Review> {
+    pub async fn get_reviews(&self, search_key: MediaSearchKey) -> ResultGetMany<ReviewInfo> {
         self.client.get_reviews(search_key).await
     }
 }

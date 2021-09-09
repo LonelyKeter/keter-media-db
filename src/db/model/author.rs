@@ -13,14 +13,6 @@ use tokio_postgres::{Statement, Row};
 
 
 impl Client<roles::Author> {
-    pub async fn post_media(
-        &self, 
-        media: MediaSearchKey, 
-        review: &Review) 
-        -> ResultPostOne {
-        todo!()
-    }
-
     pub async fn post_materials(
         &self, media: 
         MediaSearchKey, 
@@ -56,7 +48,7 @@ impl Client<roles::Author> {
 
     pub async fn get_usage(
         &self, 
-        author: AuthorSearchKey
+        author: UserSearchKey
     ) -> ResultGetMany<Usage> {
         todo!()
     }

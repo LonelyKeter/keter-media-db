@@ -14,6 +14,35 @@ pub mod client;
 pub mod default {
     use tokio_postgres::Config;
     use lazy_static::lazy_static;
+    use crate::{
+      client::{Client, ClientError},
+      auth::roles::*
+    };
+
+
+    pub async fn unauthenticated() -> Result<Client<Unauthenticated>, ClientError> {
+      Client::new(&DEFAULT_UNAUTHENTICATED_CONFIG).await
+    }
+
+    pub async fn registered() -> Result<Client<Registered>, ClientError> {
+      Client::new(&DEFAULT_REGISTERED_CONFIG).await
+    }
+
+    pub async fn author() -> Result<Client<Author>, ClientError> {
+      Client::new(&DEFAULT_AUTHOR_CONFIG).await
+    }
+
+    pub async fn moderator() -> Result<Client<Moderator>, ClientError> {
+      Client::new(&DEFAULT_MODERATOR_CONFIG).await
+    }
+
+    pub async fn admin() -> Result<Client<Admin>, ClientError> {
+      Client::new(&DEFAULT_ADMIN_CONFIG).await
+    }
+
+    pub async fn auth() -> Result<Client<Auth>, ClientError> {
+      Client::new(&DEFAULT_AUTH_CONFIG).await
+    }
 
     lazy_static! {
         pub static ref DEFAULT_UNAUTHENTICATED_CONFIG: Config = {
@@ -102,9 +131,9 @@ mod tests {
 
         let unathenticated = db.unauthenticated().await.expect("unautheticated connection failed");
         let user = db.registered().await.expect("user connection failed");
-        let author = db.author().await.expect("user connection failed");
-        let moderator = db.moderator().await.expect("user connection failed");
-        let admin = db.admin().await.expect("user connection failed");
+        let author = db.author().await.expect("author connection failed");
+        let moderator = db.moderator().await.expect("moderator connection failed");
+        let admin = db.admin().await.expect("admin connection failed");
 
         let auth_db = db::AuthDB::default();
 
@@ -123,7 +152,7 @@ mod tests {
         &"seconduser@mail.com".to_owned()
         ).await.expect("Failed to register user");
     }
-
+ 
     #[tokio::test]
     async fn authenticator() {
         use keter_media_model::userinfo::{RegisterData, LoginData};

@@ -9,6 +9,7 @@ mod author;
 mod moderator;
 mod admin;
 
+use keter_media_model::userinfo::UserKey;
 pub use unauthenticated::*;
 pub use registered::*;
 pub use author::*;
@@ -128,6 +129,9 @@ pub enum MediaSearchKey {
   TitleAuthor {title: String, author: String},
 }
 
-pub struct AuthorSearchKey {
-  pub name: String
+pub enum UserSearchKey {
+  Name(String),
+  Id(UserKey)
 }
+
+pub struct GetMediaOptions {}
