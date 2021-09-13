@@ -121,7 +121,8 @@ pub enum ClientError {
   Postgres(tokio_postgres::Error), 
   Parse(postgres_query::extract::Error),
   NoConfig,
-  NoValue
+  NoValue,
+  Unimplemented
 }
 
 impl From<tokio_postgres::Error> for ClientError {

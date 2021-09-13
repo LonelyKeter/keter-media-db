@@ -24,12 +24,19 @@ impl Privelegies<Unauthenticated> {
     pub async fn get_media_many_with_options(&self, options: &GetMediaOptions) -> ResultGetMany<MediaInfo> {
         self.client.get_media_many_with_options(options).await
     }
-
-    /*
-    pub async fn get_media(&self, key: MediaKey) -> ResultGetOne<Media> {
-        self.client.get_media(key).await
+    
+    pub async fn get_media_id(&self, key: MediaKey) -> ResultOptional<MediaInfo> {
+        self.client.get_media_id(key).await
     }
-*/
+
+    pub async fn get_materials(&self, media_key: MediaKey) -> ResultGetMany<MaterialInfo> {
+        self.client.get_materials(media_key).await
+    }
+
+    pub async fn get_author_id(&self, id: UserKey) -> ResultOptional<AuthorInfo> {
+        self.client.get_author_id(id).await
+    }
+
     pub async fn get_authors(&self) -> ResultGetMany<AuthorInfo> {
         self.client.get_authors().await
     }

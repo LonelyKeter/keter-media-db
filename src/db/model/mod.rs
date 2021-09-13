@@ -125,7 +125,7 @@ impl ModelDB {
 }
 
 pub enum MediaSearchKey {
-  Key(keter_media_model::media::MediaKey),
+  Id(keter_media_model::media::MediaKey),
   TitleAuthor {title: String, author: String},
 }
 

@@ -1,3 +1,3 @@
-SELECT MaterialId as Id, Format, Quality, LicenseName, DownloadLink 
+SELECT MaterialId as Id, Format, Quality, Size, LicenseName, DownloadLink 
   FROM Materials
   WHERE MediaId = $1;

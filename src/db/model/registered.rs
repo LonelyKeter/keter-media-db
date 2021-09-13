@@ -1,4 +1,5 @@
 use enum_map::enum_map;
+use postgres_types::Type;
 
 use super::{*};
 
@@ -12,14 +13,14 @@ use keter_media_model::{
 };
 
 impl Client<roles::Registered> {
-    pub async fn post_review(&self, user_id: UserKey, search_key: &MediaSearchKey, review: &ReviewInfo) -> ResultPostOne {
+    pub async fn post_review(&self, user_id: UserKey, search_key: &MediaSearchKey, info: &ReviewInfo) -> ResultPostOne {
         match search_key {
-            MediaSearchKey::Key(media_id) => self.execute(
+            MediaSearchKey::Id(media_id) => self.execute(
                 Statements::PostReviewWithId,
-                &[&user_id, &media_id, &review.rating, &review.text]).await?,
+                &[&user_id, &media_id, &info.review.rating, &info.review.text]).await?,
             MediaSearchKey::TitleAuthor {title, author} =>  self.execute(
                 Statements::PostReviewWithTitleAuthor,
-                &[&user_id, &title, &author, &review.rating, &review.text]).await?,
+                &[&user_id, &title, &author, &info.review.rating, &info.review.text]).await?,
         };
 
         Ok(())
@@ -53,9 +54,15 @@ impl InitStatements for roles::Registered {
 
     async fn init_statements(client: &PostgresClient) -> InitStatementsResult<Statements> {
         let mut statements = enum_map! {
-            Statements::GetInfo => client.prepare(include_str!("sql\\registered\\get_info.sql")).await?,
-            Statements::GetPrivelegies => client.prepare(include_str!("sql\\registered\\get_privelegies.sql")).await?,
-            Statements::PostReviewWithId => client.prepare(include_str!("sql\\registered\\post_review_with_id.sql")).await?,
+            Statements::GetInfo => client.prepare_typed(
+                include_str!("sql\\registered\\get_info.sql"),
+                &[Type::INT8]).await?,
+            Statements::GetPrivelegies => client.prepare_typed(
+                include_str!("sql\\registered\\get_privelegies.sql"),
+                &[Type::INT8]).await?,
+            Statements::PostReviewWithId => client.prepare_typed(
+                include_str!("sql\\registered\\post_review_with_id.sql"),
+                &[Type::INT8, Type::INT8, Type::INT2]).await?,
             //Actual sql code
             Statements::PostReviewWithTitleAuthor => client.prepare(include_str!("sql\\registered\\post_review_with_id.sql")).await?,
         };
