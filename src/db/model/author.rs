@@ -45,13 +45,6 @@ impl Client<roles::Author> {
     ) -> ResultUpdateOne<()> {
         todo!()
     }
-
-    pub async fn get_usage(
-        &self, 
-        author: UserSearchKey
-    ) -> ResultGetMany<Usage> {
-        todo!()
-    }
 }
 
 use enum_map::{Enum, enum_map};

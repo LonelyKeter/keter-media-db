@@ -2,6 +2,7 @@
 pub mod model;
 #[cfg(feature = "auth")]
 pub mod auth;
+use keter_media_model::SqlType;
 
 use async_trait::async_trait;
 
