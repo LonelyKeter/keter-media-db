@@ -1,6 +1,7 @@
 mod unauthenticated;
 mod registered;
 mod moderator;
+mod author;
 
 use crate::{client::{
     Client,
@@ -13,7 +14,6 @@ use sha2::{Sha256, Digest};
 pub struct Authenticator {
     client: Client<roles::Auth>,
 }
-
 
 
 use keter_media_model::userinfo::{LoginData, RegisterData};
@@ -108,18 +108,18 @@ impl Authorizator {
 impl<'a> Authorizator {
     pub async fn unauthenticated_privelegies(&self) 
         -> AuthorizationResult<Privelegies<roles::Unauthenticated>> {
-            Ok(Privelegies::new(None, self.model_clients.unauthenticated.clone()))
+            Ok(Privelegies::new(0, self.model_clients.unauthenticated.clone()))
     }
 
-    pub async fn user_privelegies(&self, user_key: UserKey) 
+    pub async fn registered_privelegies(&self, user_key: UserKey) 
         -> AuthorizationResult<Privelegies<roles::Registered>> {
-        Ok(Privelegies::new(Some(user_key), self.model_clients.user.clone()))
+        Ok(Privelegies::new(user_key, self.model_clients.user.clone()))
     }
 
     pub async fn author_privelegies(&self, user_key: UserKey)
         -> AuthorizationResult<Privelegies<roles::Author>> {
-        if let Some(true) = self.auth_client.has_author_permission(user_key).await? {
-            Ok(Privelegies::new(Some(user_key), self.model_clients.author.clone()))
+        if self.auth_client.has_author_permission(user_key).await? {
+            Ok(Privelegies::new(user_key, self.model_clients.author.clone()))
         } else {
             Err(AuthorizationError::NoAccess)
         }
@@ -127,8 +127,8 @@ impl<'a> Authorizator {
 
     pub async fn moderator_privelegies(&self, user_key: UserKey) 
         -> AuthorizationResult<Privelegies<roles::Moderator>> {
-        if let Some(true) = self.auth_client.has_moderator_permission(user_key).await? {
-            Ok(Privelegies::new(Some(user_key), self.model_clients.moderator.clone()))
+        if self.auth_client.has_moderator_permission(user_key).await? {
+            Ok(Privelegies::new(user_key, self.model_clients.moderator.clone()))
         } else {
             Err(AuthorizationError::NoAccess)
         }
@@ -136,8 +136,8 @@ impl<'a> Authorizator {
 
     pub async fn admin_privelegies(&self, user_key: UserKey) 
         -> AuthorizationResult<Privelegies<roles::Admin>> {
-        if let Some(true) = self.auth_client.has_admin_permission(user_key).await? {
-            Ok(Privelegies::new(Some(user_key), self.model_clients.admin.clone()))
+        if self.auth_client.has_admin_permission(user_key).await? {
+            Ok(Privelegies::new(user_key, self.model_clients.admin.clone()))
         } else {
             Err(AuthorizationError::NoAccess)
         }
@@ -146,13 +146,13 @@ impl<'a> Authorizator {
 
 use std::marker::PhantomData;
 pub struct Privelegies<R: Role + InitStatements> {
-    user_key: Option<UserKey>,
+    user_key: UserKey,
     client: Client<R>,
     _role: PhantomData<R>
 }
 
 impl<R: Role + InitStatements> Privelegies<R> {
-    fn new(user_key: Option<UserKey>, client: Client<R>) -> Self {
+    fn new(user_key: UserKey, client: Client<R>) -> Self {
         Self {
             user_key,
             client,
@@ -164,30 +164,32 @@ impl<R: Role + InitStatements> Privelegies<R> {
 pub mod roles 
 {
     pub trait Role { }
+    #[cfg(feature = "model")]
     pub use model::*;
+    #[cfg(feature = "auth")]
     pub use auth::*;
 
     #[cfg(feature = "model")]
     mod model {
         use super::Role;
 
-        #[derive(Clone)]
+        #[derive(Clone, Copy)]
         pub struct Unauthenticated;
         impl Role for Unauthenticated {}
         
-        #[derive(Clone)]
+        #[derive(Clone, Copy)]
         pub struct Registered;
         impl Role for Registered {}
         
-        #[derive(Clone)]
+        #[derive(Clone, Copy)]
         pub struct Author;
         impl Role for Author {}
         
-        #[derive(Clone)]
+        #[derive(Clone, Copy)]
         pub struct Moderator;
         impl Role for Moderator {}
         
-        #[derive(Clone)]
+        #[derive(Clone, Copy)]
         pub struct Admin;
         impl Role for Admin {}
     }

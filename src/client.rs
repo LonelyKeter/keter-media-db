@@ -11,6 +11,8 @@ use tokio_postgres::{Config, Statement};
 
 pub(crate) type StatementCollection<TKey> = EnumMap<TKey, Statement>;
 
+//TODO: Bound statement collection to be indexed by TKey and remove specific type
+
 pub struct Client<R: Role + InitStatements> {
     client: Arc<PostgresClient>,
     statements: StatementCollection<R::StatementKey>,
@@ -91,7 +93,19 @@ impl<R: Role + InitStatements> Client<R> {
     ) -> Result<bool, ClientError> {
         let statement = &self.statements[statement_key];
         let row = self.client.query_one(statement, params).await?;        
-        let result = row.get(0);
+        let result = row.try_get(0)?;
+
+        Ok(result)
+    }
+
+    pub(crate) async fn query_i64(
+        &self,
+        statement_key: R::StatementKey,
+        params: &[&(dyn ToSql + Sync)],
+    ) -> Result<i64, ClientError> {
+        let statement = &self.statements[statement_key];
+        let row = self.client.query_one(statement, params).await?;        
+        let result = row.try_get(0)?;
 
         Ok(result)
     }

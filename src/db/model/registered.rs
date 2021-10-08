@@ -17,7 +17,7 @@ impl Client<roles::Registered> {
         user_id: UserKey,
         search_key: &MediaSearchKey,
         review: &Review,
-    ) -> ResultPostOne {
+    ) -> ResultInsertOne {
         match search_key {
             MediaSearchKey::Id(media_id) => {
                 self.execute(
@@ -44,7 +44,7 @@ impl Client<roles::Registered> {
     pub async fn get_author_contacts_named(
         &self,
         author: String,
-    ) -> ResultGetOne<Option<AuthorContacts>> {
+    ) -> ResultSelectOne<Option<AuthorContacts>> {
         todo!()
     }
 
@@ -58,17 +58,18 @@ impl Client<roles::Registered> {
             .await
     }
 
-    pub async fn get_usages(&self, user_id: UserKey) -> ResultGetMany<UserUsage> {
-        self.query(Statements::GetUsages, &[&user_id]).await
-    }
-
     pub async fn is_material_used(
         &self,
         material_id: MaterialKey,
         user_id: UserKey,
-    ) -> ResultGetOne<bool> {
-        self.query_bool(Statements::GetUsages, &[&material_id, &user_id])
+    ) -> ResultSelectOne<bool> {
+        self.query_bool(Statements::IsMaterialUsed, &[&material_id, &user_id])
             .await
+    }
+
+    pub async fn use_material(&self, user_id: UserKey, material_id: MaterialKey) -> ResultInsertOne {
+        self.execute(Statements::UseMaterial, &[&user_id, &material_id]).await;
+        Ok(())
     }
 }
 
@@ -79,7 +80,7 @@ pub enum Statements {
     GetPrivelegies,
     PostReviewWithId,
     IsMaterialUsed,
-    GetUsages,
+    UseMaterial,
 }
 
 #[async_trait]
@@ -89,20 +90,20 @@ impl InitStatements for roles::Registered {
     async fn init_statements(client: &PostgresClient) -> InitStatementsResult<Statements> {
         let mut statements = enum_map! {
             Statements::GetInfo => client.prepare_typed(
-                include_str!("sql\\registered\\get_info.sql"),
+                include_str!("sql/registered/get_info.sql"),
                 &[UserKey::SQL_TYPE]).await?,
             Statements::GetPrivelegies => client.prepare_typed(
-                include_str!("sql\\registered\\get_privelegies.sql"),
+                include_str!("sql/registered/get_privelegies.sql"),
                 &[UserKey::SQL_TYPE]).await?,
             Statements::PostReviewWithId => client.prepare_typed(
-                include_str!("sql\\registered\\post_review_with_id.sql"),
+                include_str!("sql/registered/post_review_with_id.sql"),
                 &[UserKey::SQL_TYPE, MediaKey::SQL_TYPE, Type::INT2]).await?,
-            Statements::GetUsages => client.prepare_typed(
-                include_str!("sql\\registered\\get_usages.sql"),
-                &[UserKey::SQL_TYPE]).await?,
             Statements::IsMaterialUsed => client.prepare_typed(
-                include_str!("sql\\registered\\is_material_used.sql"),
+                include_str!("sql/registered/is_material_used.sql"),
                 &[MaterialKey::SQL_TYPE, UserKey::SQL_TYPE]).await?,
+            Statements::UseMaterial => client.prepare_typed(
+                include_str!("sql/registered/use_material.sql"),
+                &[UserKey::SQL_TYPE, MaterialKey::SQL_TYPE]).await?,
         };
 
         Ok(statements)
@@ -116,7 +117,7 @@ mod test {
     async fn registered() -> Client<Registered> {
         Client::new(&crate::default::DEFAULT_REGISTERED_CONFIG)
             .await
-            .unwrap()
+            .expect("Client creation failed")
     }
 
     #[tokio::test]

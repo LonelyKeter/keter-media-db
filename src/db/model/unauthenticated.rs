@@ -9,14 +9,14 @@ use keter_media_model::{
 };
 
 impl Client<roles::Unauthenticated> {
-    pub async fn get_media_many(&self) -> ResultGetMany<MediaInfo> {
+    pub async fn get_media_many(&self) -> ResultSelectMany<MediaInfo> {
         self.query(Statements::GetMediaMany, &[]).await
     }
 
     pub async fn get_media_many_with_options(
         &self,
         options: &GetMediaOptions,
-    ) -> ResultGetMany<MediaInfo> {
+    ) -> ResultSelectMany<MediaInfo> {
         todo!("Dynamic filters on queries")
     }
 
@@ -24,13 +24,13 @@ impl Client<roles::Unauthenticated> {
         self.query_opt(Statements::GetMediaId, &[&key]).await
     }
 
-    pub async fn get_media_author_id(&self, author_id: UserKey) -> ResultGetMany<MediaInfo> {
+    pub async fn get_media_author_id(&self, author_id: UserKey) -> ResultSelectMany<MediaInfo> {
         self.query(Statements::GetMediaAuthorId, &[&author_id])
             .await
     }
 
-    pub async fn get_materials(&self, media: MediaKey) -> ResultGetMany<MaterialInfo> {
-        self.query(Statements::GetMaterials, &[&media]).await
+    pub async fn get_materials(&self, media: MediaKey) -> ResultSelectMany<MaterialInfo> {
+        self.query(Statements::GetMaterialsMedia, &[&media]).await
     }
 
     pub async fn get_material_id(&self, material: MaterialKey) -> ResultOptional<MaterialInfo> {
@@ -38,19 +38,32 @@ impl Client<roles::Unauthenticated> {
             .await
     }
 
+    pub async fn get_usages(&self, user_id: UserKey) -> ResultSelectMany<Usage> {
+        self.query(Statements::GetUserUsages, &[&user_id]).await
+    }    
+
+    
+    pub async fn get_media_usages(&self, media_id: MediaKey) -> ResultSelectMany<UserUsage> {
+        self.query(Statements::GetMediaUsages, &[&media_id]).await       
+    }
+
+    pub async fn get_material_usages(&self, media_id: MediaKey) -> ResultSelectMany<UserUsage> {
+        self.query(Statements::GetMaterialUsages, &[&media_id]).await
+    }
+
     pub async fn get_user_info(&self, user_id: UserKey) -> ResultOptional<UserInfo> {
         self.query_opt(Statements::GetUserInfo, &[&user_id]).await
     }
 
-    pub async fn get_authors(&self) -> ResultGetMany<AuthorInfo> {
+    pub async fn get_authors(&self) -> ResultSelectMany<AuthorInfo> {
         todo!()
     }
 
-    pub async fn get_tags(&self) -> ResultGetMany<Tag> {
+    pub async fn get_tags(&self) -> ResultSelectMany<Tag> {
         todo!()
     }
 
-    pub async fn get_reviews(&self, search_key: MediaSearchKey) -> ResultGetMany<UserReview> {
+    pub async fn get_reviews(&self, search_key: MediaSearchKey) -> ResultSelectMany<UserReview> {
         match search_key {
             MediaSearchKey::TitleAuthor { title, author } => Err(ClientError::Unimplemented),
             MediaSearchKey::Id(media_id) => {
@@ -69,6 +82,10 @@ impl Client<roles::Unauthenticated> {
             }
         }
     } 
+
+    pub async fn get_licenses_many(&self) -> ResultSelectMany<License> {
+        self.query(Statements::GetLicensesMany, &[]).await
+    }
 }
 
 use enum_map::{enum_map, Enum};
@@ -79,15 +96,20 @@ pub enum Statements {
     GetMediaId,
     GetMediaAuthorId,
 
-    GetMaterials,
+    GetMaterialsMedia,
     GetMaterialWithId,
 
     GetReviewsMediaId,
 
+    GetLicensesMany,
     GetLicenseWithId,
     GetLicenseWithTitle,
 
-    GetUserInfo
+    GetUserInfo,
+
+    GetUserUsages,
+    GetMediaUsages,
+    GetMaterialUsages
 }
 
 #[async_trait]
@@ -98,31 +120,43 @@ impl InitStatements for roles::Unauthenticated {
         use tokio_postgres::types::Type;
 
         let mut statements = enum_map! {
-            Statements::GetMediaMany => client.prepare_static(include_str!("sql\\unauthenticated\\get_media_many.sql")).await?,
+            Statements::GetMediaMany => client.prepare_static(include_str!("sql/unauthenticated/get_media_many.sql")).await?,
             Statements::GetMediaId => client.prepare_typed(
-                include_str!("sql\\unauthenticated\\get_media_specific.sql"),
+                include_str!("sql/unauthenticated/get_media_specific.sql"),
                 &[MediaKey::SQL_TYPE]).await?,
             Statements::GetMediaAuthorId => client.prepare_typed(
-                include_str!("sql\\unauthenticated\\get_media_with_author_id.sql"),
+                include_str!("sql/unauthenticated/get_media_with_author_id.sql"),
                 &[UserKey::SQL_TYPE]).await?,
-            Statements::GetMaterials => client.prepare_typed(
-                include_str!("sql\\unauthenticated\\get_materials.sql"),
+            Statements::GetMaterialsMedia => client.prepare_typed(
+                include_str!("sql/unauthenticated/get_materials_media.sql"),
                 &[MediaKey::SQL_TYPE]).await?,
             Statements::GetMaterialWithId => client.prepare_typed(
-                include_str!("sql\\unauthenticated\\get_material_with_id.sql"),
+                include_str!("sql/unauthenticated/get_material_with_id.sql"),
                 &[MediaKey::SQL_TYPE]).await?,
+            Statements::GetUserUsages => client.prepare_typed(
+                include_str!("sql/unauthenticated/get_user_usages.sql"),
+                &[UserKey::SQL_TYPE]).await?,
             Statements::GetReviewsMediaId => client.prepare_typed(
-                include_str!("sql\\unauthenticated\\get_reviews_media_id.sql"),
+                include_str!("sql/unauthenticated/get_reviews_media_id.sql"),
                 &[MediaKey::SQL_TYPE]).await?,
             Statements::GetUserInfo => client.prepare_typed(
-                include_str!("sql\\unauthenticated\\get_user_info.sql"),
+                include_str!("sql/unauthenticated/get_user_info.sql"),
                 &[UserKey::SQL_TYPE]).await?,
+            Statements::GetLicensesMany => client.prepare_static(include_str!("sql/unauthenticated/get_licenses_many.sql")).await?,
             Statements::GetLicenseWithId => client.prepare_typed(
-                include_str!("sql\\unauthenticated\\get_license_with_id.sql"),
+                include_str!("sql/unauthenticated/get_license_with_id.sql"),
                 &[Type::INT4]).await?,
             Statements::GetLicenseWithTitle => client.prepare_typed(
-                include_str!("sql\\unauthenticated\\get_license_with_title.sql"),
+                include_str!("sql/unauthenticated/get_license_with_title.sql"),
                 &[Type::VARCHAR]).await?,
+            Statements::GetMediaUsages => client.prepare_typed(
+                include_str!("sql/unauthenticated/get_media_usages.sql"),
+                &[MediaKey::SQL_TYPE]
+            ).await?,
+            Statements::GetMaterialUsages => client.prepare_typed(
+                include_str!("sql/unauthenticated/get_material_usages.sql"),
+                &[MaterialKey::SQL_TYPE]
+            ).await?
         };
 
         Ok(statements)

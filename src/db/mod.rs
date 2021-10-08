@@ -29,7 +29,7 @@ pub(crate) async fn establish_connection(config: &Config) -> Result<PostgresClie
   Ok(client)
 }
 
-type InitStatementsResult<TKey> = Result<StatementCollection<TKey>, tokio_postgres::Error>;
+pub(crate) type InitStatementsResult<TKey> = Result<StatementCollection<TKey>, tokio_postgres::Error>;
 #[async_trait]
 pub trait InitStatements {
   type StatementKey: enum_map::Enum<Statement>;
@@ -40,12 +40,12 @@ pub use result::*;
 pub mod result {
   use super::*;
 
-  pub type ResultGetOne<T> = Result<T, ClientError>;
+  pub type ResultSelectOne<T> = Result<T, ClientError>;
   pub type ResultOptional<T> = Result<Option<T>, ClientError>;
-  pub type ResultGetMany<T> = Result<Vec<T>, ClientError>;
+  pub type ResultSelectMany<T> = Result<Vec<T>, ClientError>;
   
-  pub type ResultPostOne = Result<(), ClientError>;
-  pub type ResultPostMany<T> = Result<Vec<T>, ClientError>;
+  pub type ResultInsertOne = Result<(), ClientError>;
+  pub type ResultInsertMany<T> = Result<Vec<T>, ClientError>;
   
   pub type ResultDeleteOne = Result<(), ClientError>;
   

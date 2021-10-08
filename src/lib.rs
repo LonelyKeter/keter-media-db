@@ -8,7 +8,9 @@
 
 
 #[macro_use] pub mod db;
+#[cfg(feature = "auth")]
 pub mod auth;
+#[cfg(feature = "model")]
 pub mod client;
 
 pub mod default {
@@ -110,6 +112,18 @@ pub mod default {
             config
                 .user("keter_media_auth")
                 .password("keter_media_auth")
+                .dbname("ketermedia")
+                .host("localhost")
+                .port(5432);
+    
+            config
+        };
+
+        pub static ref DEFAULT_STORE_CONFIG: Config = {
+            let mut config = Config::new();
+            config
+                .user("keter_media_store")
+                .password("keter_media_store")
                 .dbname("ketermedia")
                 .host("localhost")
                 .port(5432);

@@ -13,15 +13,15 @@ use tokio_postgres::{Statement, Row};
 
 impl Client<roles::Moderator> {
     //TODO: Remove review DB logic
-    pub async fn remove_review(&self, remove_review: &RemoveReview) -> ResultPostOne {
+    pub async fn remove_review(&self, remove_review: &RemoveReview) -> ResultInsertOne {
         todo!()
     }
     
-    pub async fn get_moderation(&self, search_options: &ModerationSearchOptions) -> ResultGetOne<AuthorContacts> {
+    pub async fn get_moderation(&self, search_options: &ModerationSearchOptions) -> ResultSelectOne<AuthorContacts> {
         todo!("Moderation logic")
     }
 
-    pub async fn get_removal_reasons(&self) -> ResultGetMany<ReviewRemovalReason> {
+    pub async fn get_removal_reasons(&self) -> ResultSelectMany<ReviewRemovalReason> {
         todo!()
     }
 }
