@@ -1,5 +1,5 @@
 use super::{
-    Privelegies,
+    Priveleges,
     roles::Moderator
 };
 
@@ -15,7 +15,7 @@ use keter_media_model::{
   userinfo::*
 };
 
-impl Privelegies<Moderator> {
+impl Priveleges<Moderator> {
     pub async fn remove_review(&self, remove_review: &RemoveReview) -> ResultInsertOne {
         self.client.remove_review(remove_review).await
     }

@@ -80,18 +80,21 @@ impl Client<roles::Auth> {
     }
 
     pub async fn has_author_permission(&self, user_key: UserKey) -> ResultSelectOne<bool> {
-        self.query_bool(Statements::HasAuthorPermission, &[&user_key])
-            .await
+        self.query_val(Statements::HasAuthorPermission, &[&user_key])
+            .await?
+            .extract()
     }
 
     pub async fn has_moderator_permission(&self, user_key: UserKey) -> ResultSelectOne<bool> {
-        self.query_bool(Statements::HasModeratorPermission, &[&user_key])
-            .await
+        self.query_val(Statements::HasModeratorPermission, &[&user_key])
+            .await?
+            .extract()
     }
 
     pub async fn has_admin_permission(&self, user_key: UserKey) -> ResultSelectOne<bool> {
-        self.query_bool(Statements::HasAdminPermission, &[&user_key])
-            .await
+        self.query_val(Statements::HasAdminPermission, &[&user_key])
+            .await?
+            .extract()
     }
 }
 

@@ -7,6 +7,19 @@ use postgres_types::Type;
 use tokio_postgres::{Row, Statement};
 
 impl Client<roles::Author> {
+    pub async fn create_media(
+        &self,
+        user_id: UserKey,
+        reg_media: &RegisterMedia,
+    ) -> ResultSelectOne<MediaKey> {
+        self.query_val(
+            Statements::CreateMedia,
+            &[&user_id, &reg_media.title, &reg_media.kind],
+        )
+        .await?
+        .extract()
+    }
+
     pub async fn insert_material(
         &self,
         user_id: UserKey,
@@ -16,17 +29,24 @@ impl Client<roles::Author> {
         quality: Quality,
     ) -> ResultSelectOne<MaterialKey> {
         match license {
-            LicenseSearchKey::Id(license_id) =>  self.query_i64(
-                Statements::InsertMaterialLicenseId,
-                &[&user_id, &media_id, &license_id, &format, &quality],
-            )
-            .await,
-            _ => unimplemented!("Material post with license name")
+            LicenseSearchKey::Id(license_id) => self
+                .query_val(
+                    Statements::InsertMaterialLicenseId,
+                    &[&user_id, &media_id, &license_id, &format, &quality],
+                )
+                .await?
+                .extract(),
+            _ => unimplemented!("Material post with license name"),
         }
     }
 
-    pub async fn delete_material(&self, user_id: UserKey, material_id: MaterialKey) -> ResultDeleteOne {
-        self.execute(Statements::DeleteMaterial, &[&user_id, &material_id]).await?;
+    pub async fn delete_material(
+        &self,
+        user_id: UserKey,
+        material_id: MaterialKey,
+    ) -> ResultDeleteOne {
+        self.execute(Statements::DeleteMaterial, &[&user_id, &material_id])
+            .await?;
         Ok(())
     }
 
@@ -54,6 +74,7 @@ use enum_map::{enum_map, Enum};
 pub enum Statements {
     InsertMaterialLicenseId,
     DeleteMaterial,
+    CreateMedia,
 }
 
 #[async_trait]
@@ -64,11 +85,15 @@ impl InitStatements for roles::Author {
         let statements = enum_map! {
             Statements::InsertMaterialLicenseId => client.prepare_typed(
                 include_str!("sql/author/insert_material_license_id.sql"),
-                &[UserKey::SQL_TYPE, MediaKey::SQL_TYPE, LicenseKey::SQL_TYPE, Type::VARCHAR]
+                &[UserKey::SQL_TYPE, MediaKey::SQL_TYPE, LicenseKey::SQL_TYPE, String::SQL_TYPE]
             ).await?,
             Statements::DeleteMaterial => client.prepare_typed(
                 include_str!("sql/author/delete_material.sql"),
                 &[UserKey::SQL_TYPE, MaterialKey::SQL_TYPE]
+            ).await?,
+            Statements::CreateMedia => client.prepare_typed(
+                include_str!("sql/author/create_media.sql"),
+                &[UserKey::SQL_TYPE, String::SQL_TYPE]
             ).await?,
         };
 

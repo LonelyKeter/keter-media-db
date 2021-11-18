@@ -1,5 +1,5 @@
 use super::{
-    Privelegies,
+    Priveleges,
     roles::Author
 };
 
@@ -12,7 +12,11 @@ use crate::db::{
 
 use keter_media_model::{media::*, usage::LicenseSearchKey, userinfo::*};
 
-impl Privelegies<Author> {
+impl Priveleges<Author> {
+    pub async fn create_media(&self, reg_media: &RegisterMedia) -> ResultSelectOne<MediaKey> {
+        self.client.create_media(self.user_key, reg_media).await
+    }
+
     pub async fn insert_material(
         &self,
         media_id: MediaKey,

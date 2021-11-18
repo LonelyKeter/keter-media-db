@@ -22,7 +22,7 @@ impl Client<roles::Registered> {
             MediaSearchKey::Id(media_id) => {
                 self.execute(
                     Statements::PostReviewWithId,
-                    &[&user_id, &media_id, &review.rating, &review.text],
+                    &[&user_id, &*media_id, &review.text],
                 )
                 .await?
             }
@@ -43,44 +43,27 @@ impl Client<roles::Registered> {
 
     pub async fn get_author_contacts_named(
         &self,
-        author: String,
+        author: &str,
     ) -> ResultSelectOne<Option<AuthorContacts>> {
-        todo!()
+        Err(ClientError::Unimplemented)
     }
 
-    pub async fn get_info(&self, user_id: UserKey) -> ResultOptional<UserInfo> {
-        self.query_opt::<UserInfo>(Statements::GetInfo, &[&user_id])
-            .await
-    }
-
-    pub async fn get_privelegies(&self, user_id: UserKey) -> ResultOptional<UserPriveleges> {
-        self.query_opt::<UserPriveleges>(Statements::GetPrivelegies, &[&user_id])
-            .await
-    }
-
-    pub async fn is_material_used(
-        &self,
-        material_id: MaterialKey,
-        user_id: UserKey,
-    ) -> ResultSelectOne<bool> {
-        self.query_bool(Statements::IsMaterialUsed, &[&material_id, &user_id])
-            .await
-    }
-
-    pub async fn use_material(&self, user_id: UserKey, material_id: MaterialKey) -> ResultInsertOne {
-        self.execute(Statements::UseMaterial, &[&user_id, &material_id]).await;
+    pub async fn create_material_usage(&self, user_id: UserKey, material_id: MaterialKey) -> ResultInsertOne {
+        self.execute(Statements::CreateMaterialUsage, &[&user_id, &material_id]).await?;
         Ok(())
+    }
+
+    pub async fn insert_material_rating(&self, material_id: MaterialKey, user_id: UserKey, rating: &UserRating) -> ResultUpdateOne<()> {
+        self.update_one(Statements::UpdateMaterialRating, &[&material_id, &user_id, &rating.rating]).await
     }
 }
 
 use enum_map::Enum;
 #[derive(Enum, Clone, Copy)]
 pub enum Statements {
-    GetInfo,
-    GetPrivelegies,
     PostReviewWithId,
-    IsMaterialUsed,
-    UseMaterial,
+    CreateMaterialUsage,
+    UpdateMaterialRating
 }
 
 #[async_trait]
@@ -89,21 +72,15 @@ impl InitStatements for roles::Registered {
 
     async fn init_statements(client: &PostgresClient) -> InitStatementsResult<Statements> {
         let mut statements = enum_map! {
-            Statements::GetInfo => client.prepare_typed(
-                include_str!("sql/registered/get_info.sql"),
-                &[UserKey::SQL_TYPE]).await?,
-            Statements::GetPrivelegies => client.prepare_typed(
-                include_str!("sql/registered/get_privelegies.sql"),
-                &[UserKey::SQL_TYPE]).await?,
             Statements::PostReviewWithId => client.prepare_typed(
                 include_str!("sql/registered/post_review_with_id.sql"),
-                &[UserKey::SQL_TYPE, MediaKey::SQL_TYPE, Type::INT2]).await?,
-            Statements::IsMaterialUsed => client.prepare_typed(
-                include_str!("sql/registered/is_material_used.sql"),
-                &[MaterialKey::SQL_TYPE, UserKey::SQL_TYPE]).await?,
-            Statements::UseMaterial => client.prepare_typed(
-                include_str!("sql/registered/use_material.sql"),
+                &[UserKey::SQL_TYPE, MediaKey::SQL_TYPE, String::SQL_TYPE]).await?,
+            Statements::CreateMaterialUsage => client.prepare_typed(
+                include_str!("sql/registered/create_material_usage.sql"),
                 &[UserKey::SQL_TYPE, MaterialKey::SQL_TYPE]).await?,
+            Statements::UpdateMaterialRating => client.prepare_typed(
+                include_str!("sql/registered/update_material_rating.sql"),
+                &[MaterialKey::SQL_TYPE, UserKey::SQL_TYPE, i16::SQL_TYPE]).await?,
         };
 
         Ok(statements)
@@ -118,24 +95,5 @@ mod test {
         Client::new(&crate::default::DEFAULT_REGISTERED_CONFIG)
             .await
             .expect("Client creation failed")
-    }
-
-    #[tokio::test]
-    async fn get_info_test() {
-        let client = registered().await;
-        let info = client.get_info(1).await.unwrap().unwrap();
-
-        assert_eq!(info.id, 1);
-        assert_eq!(info.name, "First author");
-    }
-
-    #[tokio::test]
-    async fn get_privelegies() {
-        let client = registered().await;
-        let privelegies = client.get_privelegies(1).await.unwrap().unwrap();
-
-        assert_eq!(privelegies.author, true);
-        assert_eq!(privelegies.moderator, false);
-        assert_eq!(privelegies.admin, false);
     }
 }

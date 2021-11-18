@@ -7,7 +7,7 @@ use crate::{
 };
 
 use postgres_types::{FromSql, ToSql};
-use tokio_postgres::{Config, Statement};
+use tokio_postgres::{Config, Row, Statement};
 
 pub(crate) type StatementCollection<TKey> = EnumMap<TKey, Statement>;
 
@@ -86,28 +86,45 @@ impl<R: Role + InitStatements> Client<R> {
         Ok(result)
     }
 
-    pub(crate) async fn query_bool(
+    pub(crate) async fn update_one(
         &self,
         statement_key: R::StatementKey,
         params: &[&(dyn ToSql + Sync)],
-    ) -> Result<bool, ClientError> {
+    ) -> Result<(), ClientError> {
+        use postgres_query::extract::FromSqlRow;
         let statement = &self.statements[statement_key];
-        let row = self.client.query_one(statement, params).await?;        
-        let result = row.try_get(0)?;
-
-        Ok(result)
+        let modified = self.client().execute(statement, params).await?;
+        
+        if modified != 1 {
+            Err(ClientError::InvalidUpdate)
+        } else {
+            Ok(())
+        }
     }
 
-    pub(crate) async fn query_i64(
+    pub(crate) async fn query_val(
         &self,
         statement_key: R::StatementKey,
         params: &[&(dyn ToSql + Sync)],
-    ) -> Result<i64, ClientError> {
+    ) -> Result<QueriedVal, ClientError> {
         let statement = &self.statements[statement_key];
         let row = self.client.query_one(statement, params).await?;        
-        let result = row.try_get(0)?;
 
-        Ok(result)
+        Ok(QueriedVal::new(row))
+    }
+}
+
+pub(crate) struct QueriedVal {
+    row: Row
+}
+
+impl QueriedVal {
+    fn new(row: Row) -> Self {
+        Self { row }
+    }
+
+    pub fn extract<'a, T: FromSql<'a>>(&'a self) -> Result<T, ClientError> {
+        self.row.try_get(0).map_err(ClientError::from)
     }
 }
 
@@ -148,6 +165,7 @@ pub enum ClientError {
     Parse(postgres_query::extract::Error),
     NoConfig,
     Unimplemented,
+    InvalidUpdate
 }
 
 impl From<tokio_postgres::Error> for ClientError {
