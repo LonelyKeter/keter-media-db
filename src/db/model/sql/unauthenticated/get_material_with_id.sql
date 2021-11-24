@@ -1,16 +1,16 @@
 SELECT 
-	M.Id, 
-	M.MediaId, 
-	M.Format, 
-	M.Quality, 
-	M.LicenseName, 
-	M.Rating, 
-	M.UseCount, 
+	m.id, 
+	m.media_id, 
+	m.format, 
+	m.quality, 
+	m.license_name, 
+	m.rating, 
+	m.use_count, 
 	(CASE 
 	 	WHEN $2 IS NULL THEN NULL 
-	 	ELSE MU.UserId IS NOT NULL
-	 END) AS IsUsed
-  FROM unauthenticated.Materials M 
-  LEFT JOIN unauthenticated.MaterialUsage MU 
-  ON M.Id = MU.MaterialId AND MU.UserId = $2
-  WHERE M.Id = $1;
+	 	ELSE mu.user_id IS NOT NULL
+	 END) AS is_used
+  FROM unauthenticated.materials m 
+  LEFT JOIN unauthenticated.material_usage mu 
+  ON m.id = mu.material_id AND mu.user_id = $2
+  WHERE m.id = $1;

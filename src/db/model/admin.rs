@@ -14,7 +14,7 @@ impl Client<roles::Admin> {
 }
 
 use enum_map::Enum;
-#[derive(Enum, Clone, Copy)]
+#[derive(Enum, Clone, Copy, Debug)]
 pub enum Statements {}
 
 #[async_trait]

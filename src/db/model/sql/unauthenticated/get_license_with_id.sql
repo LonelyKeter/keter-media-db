@@ -1,3 +1,3 @@
-SELECT Id, Title, Text, Date 
-    FROM Licenses
-    WHERE Id = $1;
+SELECT id, title, text, date 
+    FROM licenses
+    WHERE id = $1;

@@ -1,3 +1,3 @@
-SELECT Author, Moderator, Administrator
-  FROM Users
-  WHERE Id = $1;
+SELECT is_author, administration_permissions
+  FROM users
+  WHERE id = $1;

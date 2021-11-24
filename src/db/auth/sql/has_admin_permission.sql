@@ -1,3 +1,3 @@
-SELECT Administrator
-    FROM Users
-    WHERE Id = $1; 
+SELECT (SELECT administration_permissions
+    FROM users
+    WHERE id = $1) >= 'admin'; 

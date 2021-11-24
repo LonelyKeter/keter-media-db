@@ -133,5 +133,3 @@ pub enum UserSearchKey {
   Name(String),
   Id(UserKey)
 }
-
-pub struct GetMediaOptions {}

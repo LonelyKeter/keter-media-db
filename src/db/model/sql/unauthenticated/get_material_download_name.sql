@@ -1,2 +1,2 @@
-SELECT DownloadName FROM Materials
-    WHERE Id = $1;
+SELECT download_name FROM materials
+    where id = $1;

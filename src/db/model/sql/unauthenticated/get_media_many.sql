@@ -1,2 +1,2 @@
-SELECT Id, Title, Kind, AuthorId as Id, AuthorName as Name, AuthorCountry as Country, Rating, UseCount
-  FROM Mediaproducts;
+SELECT id, title, kind, author_id AS id, author_name AS name, author_country AS country, rating, use_count
+  FROM mediaproducts;

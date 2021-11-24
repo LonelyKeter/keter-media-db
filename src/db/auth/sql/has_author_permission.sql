@@ -1,3 +1,3 @@
-SELECT Author 
-    FROM Users
-    WHERE Id = $1; 
+SELECT is_author 
+    FROM users
+    WHERE id = $1; 

@@ -31,7 +31,7 @@ pub struct ModerationSearchOptions {
 }
 
 use enum_map::{Enum, enum_map};
-#[derive(Enum, Clone, Copy)]
+#[derive(Enum, Clone, Copy, Debug)]
 pub enum Statements {
 
 }

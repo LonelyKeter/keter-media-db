@@ -30,3 +30,4 @@ lazy_static = "1.4.0"
 postgres-types = { version = "0.2.1", features = ["derive"] }
 hex = { version = "0.4.3"}
 enum-map = "1.1.1"
+pretty_unwrap = { path = "../pretty_unwrap" }

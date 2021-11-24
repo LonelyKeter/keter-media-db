@@ -1,10 +1,7 @@
 use enum_map::EnumMap;
-use std::{collections::HashMap, marker::PhantomData, sync::Arc};
+use std::{collections::HashMap, fmt::Debug, marker::PhantomData, sync::Arc};
 
-use crate::{
-    auth::roles::*,
-    db::{establish_connection, PostgresClient},
-};
+use crate::{auth::roles::*, db::{InitStatementsError, PostgresClient, establish_connection}};
 
 use postgres_types::{FromSql, ToSql};
 use tokio_postgres::{Config, Row, Statement};
@@ -13,8 +10,9 @@ pub(crate) type StatementCollection<TKey> = EnumMap<TKey, Statement>;
 
 //TODO: Bound statement collection to be indexed by TKey and remove specific type
 
+
 pub struct Client<R: Role + InitStatements> {
-    client: Arc<PostgresClient>,
+    client: PostgresClient,
     statements: StatementCollection<R::StatementKey>,
     _role: PhantomData<R>,
 }
@@ -128,27 +126,13 @@ impl QueriedVal {
     }
 }
 
-impl<R> Clone for Client<R>
-where
-    R: Role + InitStatements,
-    EnumMap<<R as InitStatements>::StatementKey, Statement>: Clone,
-{
-    fn clone(&self) -> Self {
-        Self {
-            client: self.client.clone(),
-            statements: self.statements.clone(),
-            _role: PhantomData,
-        }
-    }
-}
-
 unsafe impl<R: Role + InitStatements> Send for Client<R> {}
 unsafe impl<R: Role + InitStatements> Sync for Client<R> {}
 
 use crate::db::InitStatements;
 impl<R: Role + InitStatements> Client<R> {
     pub(crate) async fn new(config: &Config) -> Result<Self, ClientError> {
-        let client = Arc::new(establish_connection(config).await?);
+        let client = establish_connection(config).await?;
         let statements = R::init_statements(&client).await?;
 
         Ok(Self {
@@ -163,6 +147,7 @@ impl<R: Role + InitStatements> Client<R> {
 pub enum ClientError {
     Postgres(tokio_postgres::Error),
     Parse(postgres_query::extract::Error),
+    InitStatements { statement_key: String, error: tokio_postgres::Error },
     NoConfig,
     Unimplemented,
     InvalidUpdate
@@ -177,6 +162,15 @@ impl From<tokio_postgres::Error> for ClientError {
 impl From<postgres_query::extract::Error> for ClientError {
     fn from(other: postgres_query::extract::Error) -> ClientError {
         ClientError::Parse(other)
+    }
+}
+
+impl<K: Debug> From<InitStatementsError<K>> for ClientError {
+    fn from(other: InitStatementsError<K>) -> Self {
+        ClientError::InitStatements {
+            statement_key: format!("{:?}", other.statement_key),
+            error: other.error
+        }
     }
 }
 

@@ -1,3 +1,3 @@
-SELECT UserId as Id, UserName as Name, Id, Text, Date 
-    FROM Reviews
-    WHERE Id = $1; 
+SELECT user_id AS id, user_name AS name, id, text, date 
+    FROM reviews
+    WHERE id = $1; 

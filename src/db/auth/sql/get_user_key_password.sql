@@ -1,3 +1,3 @@
-SELECT Id, Password 
-  FROM Users 
-  WHERE Email = $1;
+SELECT id, password 
+  FROM users 
+  WHERE email = $1;

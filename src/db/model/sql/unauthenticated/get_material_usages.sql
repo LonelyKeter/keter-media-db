@@ -1,7 +1,7 @@
-SELECT U.Id, U.Name, MU.MaterialId, MU.Date, L.Id, L.Title, L.Text, L.Date 
-    FROM MaterialUsage MU
-    INNER JOIN Users U
-    ON MU.UserId = U.Id
-    INNER JOIN Licenses L 
-    ON MU.LicenseId = L.Id
-    WHERE MU.MaterialId = $1;
+SELECT u.id, u.name, mu.material_id, mu.date, l.id, l.title, l.text, l.date 
+    FROM material_usage mu
+    INNER JOIN users u
+    ON mu.user_id = u.id
+    INNER JOIN licenses l 
+    ON mu.license_id = l.id
+    WHERE mu.material_id = $1;

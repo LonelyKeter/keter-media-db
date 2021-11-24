@@ -1,8 +1,3 @@
-mod unauthenticated;
-mod registered;
-mod moderator;
-mod author;
-
 use crate::{client::{
     Client,
     ClientError
@@ -70,7 +65,7 @@ impl From<ClientError> for AuthenticationError {
 
 pub struct ModelDBClients {
     unauthenticated: Client<roles::Unauthenticated>,
-    user: Client<roles::Registered>,
+    registered: Client<roles::Registered>,
     author: Client<roles::Author>,
     moderator: Client<roles::Moderator>,
     admin: Client<roles::Admin>,
@@ -81,7 +76,7 @@ impl ModelDBClients {
     pub async fn from_model_db(model_db: &ModelDB) -> Result<Self, ClientError> {
         Ok(Self {
             unauthenticated: model_db.unauthenticated().await?,
-            user: model_db.registered().await?,
+            registered: model_db.registered().await?,
             author: model_db.author().await?,
             moderator: model_db.moderator().await?,
             admin: model_db.admin().await?,
@@ -105,60 +100,43 @@ impl Authorizator {
 
 
 
-impl<'a> Authorizator {
+impl Authorizator {
     pub async fn unauthenticated_priveleges(&self) 
-        -> AuthorizationResult<Priveleges<roles::Unauthenticated>> {
-            Ok(Priveleges::new(0, self.model_clients.unauthenticated.clone()))
+        -> AuthorizationResult<&Client<roles::Unauthenticated>> {
+            Ok(&self.model_clients.unauthenticated)
     }
 
-    pub async fn registered_priveleges(&self, user_key: UserKey) 
-        -> AuthorizationResult<Priveleges<roles::Registered>> {
-        Ok(Priveleges::new(user_key, self.model_clients.user.clone()))
+    pub async fn registered_priveleges(&self) 
+        -> AuthorizationResult<&Client<roles::Registered>> {
+            Ok(&self.model_clients.registered)
     }
 
     pub async fn author_priveleges(&self, user_key: UserKey)
-        -> AuthorizationResult<Priveleges<roles::Author>> {
+        -> AuthorizationResult<&Client<roles::Author>> {
         if self.auth_client.has_author_permission(user_key).await? {
-            Ok(Priveleges::new(user_key, self.model_clients.author.clone()))
+            Ok(&self.model_clients.author)
         } else {
             Err(AuthorizationError::NoAccess)
         }
     }
 
     pub async fn moderator_priveleges(&self, user_key: UserKey) 
-        -> AuthorizationResult<Priveleges<roles::Moderator>> {
+        -> AuthorizationResult<&Client<roles::Moderator>> {
         if self.auth_client.has_moderator_permission(user_key).await? {
-            Ok(Priveleges::new(user_key, self.model_clients.moderator.clone()))
+            Ok(&self.model_clients.moderator)
         } else {
             Err(AuthorizationError::NoAccess)
         }
     }
 
     pub async fn admin_priveleges(&self, user_key: UserKey) 
-        -> AuthorizationResult<Priveleges<roles::Admin>> {
+        -> AuthorizationResult<&Client<roles::Admin>> {
         if self.auth_client.has_admin_permission(user_key).await? {
-            Ok(Priveleges::new(user_key, self.model_clients.admin.clone()))
+            Ok(&self.model_clients.admin)
         } else {
             Err(AuthorizationError::NoAccess)
         }
     }    
-}
-
-use std::marker::PhantomData;
-pub struct Priveleges<R: Role + InitStatements> {
-    user_key: UserKey,
-    client: Client<R>,
-    _role: PhantomData<R>
-}
-
-impl<R: Role + InitStatements> Priveleges<R> {
-    fn new(user_key: UserKey, client: Client<R>) -> Self {
-        Self {
-            user_key,
-            client,
-            _role: PhantomData
-        }
-    }
 }
 
 pub mod roles 

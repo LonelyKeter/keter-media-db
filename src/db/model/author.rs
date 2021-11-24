@@ -70,7 +70,7 @@ impl Client<roles::Author> {
 }
 
 use enum_map::{enum_map, Enum};
-#[derive(Enum, Clone, Copy)]
+#[derive(Enum, Clone, Copy, Debug)]
 pub enum Statements {
     InsertMaterialLicenseId,
     DeleteMaterial,
@@ -86,15 +86,18 @@ impl InitStatements for roles::Author {
             Statements::InsertMaterialLicenseId => client.prepare_typed(
                 include_str!("sql/author/insert_material_license_id.sql"),
                 &[UserKey::SQL_TYPE, MediaKey::SQL_TYPE, LicenseKey::SQL_TYPE, String::SQL_TYPE]
-            ).await?,
+            ).await
+            .map_err(|error| InitStatementsError {statement_key: Statements::InsertMaterialLicenseId, error})?,
             Statements::DeleteMaterial => client.prepare_typed(
                 include_str!("sql/author/delete_material.sql"),
                 &[UserKey::SQL_TYPE, MaterialKey::SQL_TYPE]
-            ).await?,
+            ).await
+            .map_err(|error| InitStatementsError {statement_key: Statements::DeleteMaterial, error})?,
             Statements::CreateMedia => client.prepare_typed(
                 include_str!("sql/author/create_media.sql"),
                 &[UserKey::SQL_TYPE, String::SQL_TYPE]
-            ).await?,
+            ).await
+            .map_err(|error| InitStatementsError {statement_key: Statements::CreateMedia, error})?,
         };
 
         Ok(statements)

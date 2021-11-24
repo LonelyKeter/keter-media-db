@@ -61,7 +61,12 @@ impl AuthDB {
 
 use keter_media_model::userinfo::*;
 impl Client<roles::Auth> {
-    pub async fn register_user(&self, login: &str, password: &[u8], email: &str) -> ResultInsertOne {
+    pub async fn register_user(
+        &self,
+        login: &str,
+        password: &[u8],
+        email: &str,
+    ) -> ResultInsertOne {
         let result = self
             .execute(Statements::RegisterUser, &[&login, &password, &email])
             .await?;
@@ -69,7 +74,10 @@ impl Client<roles::Auth> {
         Ok(())
     }
 
-    pub async fn get_user_key_password(&self, email: &str) -> ResultSelectOne<Option<UserIdPassHash>> {
+    pub async fn get_user_key_password(
+        &self,
+        email: &str,
+    ) -> ResultSelectOne<Option<UserIdPassHash>> {
         use postgres_query::extract::FromSqlRow;
 
         let result = self
@@ -99,7 +107,7 @@ impl Client<roles::Auth> {
 }
 
 use enum_map::Enum;
-#[derive(Enum, Clone)]
+#[derive(Enum, Clone, Debug)]
 pub enum Statements {
     RegisterUser,
     GetUserKeyPassword,
@@ -113,17 +121,26 @@ impl InitStatements for roles::Auth {
     type StatementKey = Statements;
     async fn init_statements(client: &PostgresClient) -> InitStatementsResult<Statements> {
         let statements = enum_map! {
-            Statements::RegisterUser => client.prepare(include_str!("sql\\register_user.sql")).await?,
-            Statements::GetUserKeyPassword => client.prepare(include_str!("sql\\get_user_key_password.sql")).await?,
+            Statements::RegisterUser => client.prepare(include_str!("sql\\register_user.sql"))
+                .await
+                .map_err(|error| InitStatementsError {statement_key: Statements::RegisterUser, error})?,
+            Statements::GetUserKeyPassword => client.prepare(include_str!("sql\\get_user_key_password.sql"))
+                .await
+                .map_err(|error| InitStatementsError {statement_key: Statements::GetUserKeyPassword, error})?,
             Statements::HasAuthorPermission => client.prepare_typed(
                 include_str!("sql\\has_author_permission.sql"),
-              &[UserKey::SQL_TYPE]).await?,
+                &[UserKey::SQL_TYPE]).await
+              .map_err(|error| InitStatementsError {statement_key: Statements::HasAuthorPermission, error})?,
             Statements::HasModeratorPermission => client.prepare_typed(
                 include_str!("sql\\has_moderator_permission.sql"),
-                &[UserKey::SQL_TYPE]).await?,
+                &[UserKey::SQL_TYPE])
+                .await
+                .map_err(|error| InitStatementsError {statement_key: Statements::HasModeratorPermission, error})?,
             Statements::HasAdminPermission => client.prepare_typed(
                 include_str!("sql\\has_admin_permission.sql"),
-              &[UserKey::SQL_TYPE]).await?,
+                &[UserKey::SQL_TYPE])
+                .await
+                .map_err(|error| InitStatementsError {statement_key: Statements::HasAdminPermission, error})?,
         };
 
         Ok(statements)

@@ -2,6 +2,8 @@
 pub mod model;
 #[cfg(feature = "auth")]
 pub mod auth;
+use std::fmt::Debug;
+
 use keter_media_model::SqlType;
 
 use async_trait::async_trait;
@@ -29,12 +31,26 @@ pub(crate) async fn establish_connection(config: &Config) -> Result<PostgresClie
   Ok(client)
 }
 
-pub(crate) type InitStatementsResult<TKey> = Result<StatementCollection<TKey>, tokio_postgres::Error>;
+pub(crate) type InitStatementsResult<TKey> = Result<StatementCollection<TKey>, InitStatementsError<TKey>>;
 #[async_trait]
 pub trait InitStatements {
-  type StatementKey: enum_map::Enum<Statement>;
+  type StatementKey: enum_map::Enum<Statement> + Debug;
   async fn init_statements(client: &PostgresClient) -> InitStatementsResult<Self::StatementKey>;
 }
+
+pub struct InitStatementsError<K> {
+    pub statement_key: K,
+    pub error: tokio_postgres::Error
+}
+
+#[macro_export]
+macro_rules! await_statement {
+    ($key:ident, $e:expr) => {
+        ($e.await.map_err(|error| InitStatementsError {statement_key: $key, error}))
+    }
+}
+
+pub use await_statement;
 
 pub use result::*;
 pub mod result {

@@ -5,8 +5,6 @@
 #![allow(unused_mut)]
 #![allow(unused_must_use)]
 
-
-
 #[macro_use] pub mod db;
 #[cfg(feature = "auth")]
 pub mod auth;
@@ -138,20 +136,22 @@ pub mod default {
 #[cfg(test)]
 mod tests {
     use crate::*;
+
+    use pretty_unwrap::*;
     #[tokio::test]
     async fn it_works() {
         
         let db = db::ModelDB::default();
 
-        let unathenticated = db.unauthenticated().await.expect("unautheticated connection failed");
-        let user = db.registered().await.expect("user connection failed");
-        let author = db.author().await.expect("author connection failed");
-        let moderator = db.moderator().await.expect("moderator connection failed");
-        let admin = db.admin().await.expect("admin connection failed");
+        let unathenticated = db.unauthenticated().await.expect_pretty("unautheticated connection failed");
+        let user = db.registered().await.expect_pretty("user connection failed");
+        let author = db.author().await.expect_pretty("author connection failed");
+        let moderator = db.moderator().await.expect_pretty("moderator connection failed");
+        let admin = db.admin().await.expect_pretty("admin connection failed");
 
         let auth_db = db::AuthDB::default();
 
-        let auth = auth_db.auth().await.expect("auth connection failed");
+        let auth = auth_db.auth().await.expect_pretty("auth connection failed");
     }
 
     #[tokio::test]
@@ -159,12 +159,12 @@ mod tests {
         //TODO: Determine, where hashing stage should be completed
         use keter_media_model::userinfo::{RegisterData, LoginData};
         let db = db::AuthDB::default();
-        let auth = db.auth().await.expect("auth connection failed");
+        let auth = db.auth().await.expect_pretty("auth connection failed");
 
         auth.register_user("Second user",  
-        &hex::decode("263c33a2a9431fc185a3da10a199b36aadad10c59eaf10beca8b54684171ba0c").unwrap(),
+        &hex::decode("263c33a2a9431fc185a3da10a199b36aadad10c59eaf10beca8b54684171ba0c").unwrap_pretty(),
         &"seconduser@mail.com".to_owned()
-        ).await.expect("Failed to register user");
+        ).await.expect_pretty("Failed to register user");
     }
  
     #[tokio::test]
@@ -172,7 +172,7 @@ mod tests {
         use keter_media_model::userinfo::{RegisterData, LoginData};
         use auth::Authenticator;
         let db = db::AuthDB::default();
-        let auth = Authenticator::new(db.auth().await.expect("auth connection failed"));
+        let auth = Authenticator::new(db.auth().await.expect_pretty("auth connection failed"));
 
         let login_d = LoginData { 
             email: "thirduser@mail.com".to_owned(), 
@@ -184,7 +184,7 @@ mod tests {
             login_data: login_d.clone()
         };
 
-        auth.register(reg_d).await.expect("Failed to register third user");
-        auth.authenticate(login_d).await.expect("Failed to login");
+        auth.register(reg_d).await.expect_pretty("Failed to register third user");
+        auth.authenticate(login_d).await.expect_pretty("Failed to login");
     }
 }
