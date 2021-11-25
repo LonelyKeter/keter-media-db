@@ -96,8 +96,8 @@ impl Client<roles::Unauthenticated> {
             .await
     }
 
-    pub async fn get_authors(&self) -> ResultSelectMany<AuthorInfo> {
-        todo!()
+    pub async fn get_authors_many(&self) -> ResultSelectMany<AuthorInfo> {
+        self.query(Statements::GetAuthorInfoMany, &[]).await
     }
 
     pub async fn get_reviews(&self, search_key: &MediaSearchKey) -> ResultSelectMany<UserReview> {
@@ -155,6 +155,8 @@ pub enum Statements {
     GetUserInfo,
     GetUserPriveleges,
     GetUserUsages,
+
+    GetAuthorInfoMany
 }
 
 #[async_trait]
@@ -179,6 +181,11 @@ impl InitStatements for roles::Unauthenticated {
                 include_str!("sql/unauthenticated/get_media_with_author_id.sql"),
                 &[UserKey::SQL_TYPE]).await
                 .map_err(|error| InitStatementsError {statement_key: Statements::GetMediaAuthorId, error})?,
+            Statements::GetMediaUsages => client.prepare_typed(
+                include_str!("sql/unauthenticated/get_media_usages.sql"),
+                &[MediaKey::SQL_TYPE]).await
+                .map_err(|error| InitStatementsError {statement_key: Statements::GetMediaUsages, error})?,
+
             Statements::GetMaterialsMedia => client.prepare_typed(
                 include_str!("sql/unauthenticated/get_materials_media.sql"),
                 &[MediaKey::SQL_TYPE, UserKey::SQL_TYPE]).await
@@ -186,7 +193,11 @@ impl InitStatements for roles::Unauthenticated {
             Statements::GetMaterialWithId => client.prepare_typed(
                 include_str!("sql/unauthenticated/get_material_with_id.sql"),
                 &[MaterialKey::SQL_TYPE, UserKey::SQL_TYPE]).await
-                .map_err(|error| InitStatementsError {statement_key: Statements::GetMaterialWithId, error})?,
+                .map_err(|error| InitStatementsError {statement_key: Statements::GetMaterialWithId, error})?,       
+            Statements::GetMaterialUsages => client.prepare_typed(
+                include_str!("sql/unauthenticated/get_material_usages.sql"),
+                &[MaterialKey::SQL_TYPE]).await
+                .map_err(|error| InitStatementsError {statement_key: Statements::GetMaterialUsages, error})?,
             Statements::GetMaterialUsageUserId => client.prepare_typed(
                 include_str!("sql/unauthenticated/get_material_usage_user_id.sql"),
                 &[MaterialKey::SQL_TYPE, UserKey::SQL_TYPE])
@@ -196,10 +207,7 @@ impl InitStatements for roles::Unauthenticated {
                 include_str!("sql/unauthenticated/get_material_download_name.sql"),
                 &[MaterialKey::SQL_TYPE]).await
                 .map_err(|error| InitStatementsError {statement_key: Statements::GetMaterialDownloadName, error})?,
-            Statements::GetUserUsages => client.prepare_typed(
-                include_str!("sql/unauthenticated/get_user_usages.sql"),
-                &[UserKey::SQL_TYPE]).await
-                .map_err(|error| InitStatementsError {statement_key: Statements::GetMediaMany, error})?,
+                
             Statements::GetReviewsMediaId => client.prepare_typed(
                 include_str!("sql/unauthenticated/get_reviews_media_id.sql"),
                 &[MediaKey::SQL_TYPE]).await
@@ -208,10 +216,7 @@ impl InitStatements for roles::Unauthenticated {
                 include_str!("sql/unauthenticated/get_review_id.sql"),
                 &[ReviewKey::SQL_TYPE]).await
                 .map_err(|error| InitStatementsError {statement_key: Statements::GetReviewId, error})?,
-            Statements::GetUserInfo => client.prepare_typed(
-                include_str!("sql/unauthenticated/get_user_info.sql"),
-                &[UserKey::SQL_TYPE]).await
-                .map_err(|error| InitStatementsError {statement_key: Statements::GetUserInfo, error})?,
+
             Statements::GetLicensesMany => client.prepare_static(include_str!("sql/unauthenticated/get_licenses_many.sql"))
                 .await.map_err(|error| InitStatementsError {statement_key: Statements::GetLicensesMany, error})?,
             Statements::GetLicenseWithId => client.prepare_typed(
@@ -221,19 +226,25 @@ impl InitStatements for roles::Unauthenticated {
             Statements::GetLicenseWithTitle => client.prepare_typed(
                 include_str!("sql/unauthenticated/get_license_with_title.sql"),
                 &[String::SQL_TYPE]).await
-                .map_err(|error| InitStatementsError {statement_key: Statements::GetLicenseWithTitle, error})?,
-            Statements::GetMediaUsages => client.prepare_typed(
-                include_str!("sql/unauthenticated/get_media_usages.sql"),
-                &[MediaKey::SQL_TYPE]).await
-                .map_err(|error| InitStatementsError {statement_key: Statements::GetMediaUsages, error})?,
-            Statements::GetMaterialUsages => client.prepare_typed(
-                include_str!("sql/unauthenticated/get_material_usages.sql"),
-                &[MaterialKey::SQL_TYPE]).await
-                .map_err(|error| InitStatementsError {statement_key: Statements::GetMaterialUsages, error})?,
+                .map_err(|error| InitStatementsError {statement_key: Statements::GetLicenseWithTitle, error})?,                
+                
+            Statements::GetUserInfo => client.prepare_typed(
+                include_str!("sql/unauthenticated/get_user_info.sql"),
+                &[UserKey::SQL_TYPE]).await
+                .map_err(|error| InitStatementsError {statement_key: Statements::GetUserInfo, error})?,
             Statements::GetUserPriveleges => client.prepare_typed(
                 include_str!("sql/unauthenticated/get_user_priveleges.sql"),
                 &[UserKey::SQL_TYPE]).await
                 .map_err(|error| InitStatementsError {statement_key: Statements::GetUserPriveleges, error})?,
+            Statements::GetUserUsages => client.prepare_typed(
+                include_str!("sql/unauthenticated/get_user_usages.sql"),
+                &[UserKey::SQL_TYPE]).await
+                .map_err(|error| InitStatementsError {statement_key: Statements::GetMediaMany, error})?,
+
+            Statements::GetAuthorInfoMany => client.prepare_typed(
+                include_str!("sql/unauthenticated/get_author_info_many.sql"),
+                &[]).await
+                .map_err(|error| InitStatementsError {statement_key: Statements::GetAuthorInfoMany, error})?,         
         };
 
         Ok(statements)
