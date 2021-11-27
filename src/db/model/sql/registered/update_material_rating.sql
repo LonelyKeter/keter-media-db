@@ -1,5 +1,5 @@
 SELECT registered.update_material_rating(
-	material_id := $1, 
-	user_id := $2, 
-	input_rating := $3
+	v_material_id := $1, 
+	v_user_id := $2, 
+	v_rating := $3
 );

@@ -1,2 +1,5 @@
-SELECT id, name, email 
-    FROM authors;
+SELECT 
+    id, 
+    name, 
+    email 
+FROM authors;

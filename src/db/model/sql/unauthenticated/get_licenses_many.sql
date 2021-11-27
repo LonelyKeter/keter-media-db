@@ -1,2 +1,6 @@
-SELECT id, title, text, date 
-    FROM licenses;
+SELECT 
+    id, 
+    title, 
+    text, 
+    date 
+FROM licenses;
