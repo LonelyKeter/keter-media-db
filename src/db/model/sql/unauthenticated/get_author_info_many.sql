@@ -1,5 +1,6 @@
 SELECT 
     id, 
     name, 
-    email 
+    email,
+    rating
 FROM authors;

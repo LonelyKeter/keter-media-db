@@ -100,6 +100,10 @@ impl Client<roles::Unauthenticated> {
         self.query(Statements::GetAuthorInfoMany, &[]).await
     }
 
+    pub async fn get_authors_filtered(&self, options: &AuthorFilterOptions) -> ResultSelectMany<AuthorInfo> {
+        self.query(Statements::GetAuthorInfoFiltered, &[&options.name, &options.kinds, &options.popularity]).await
+    }
+
     pub async fn get_reviews(&self, search_key: &MediaSearchKey) -> ResultSelectMany<UserReview> {
         match search_key {
             MediaSearchKey::TitleAuthor { title, author } => Err(ClientError::Unimplemented),
@@ -156,7 +160,8 @@ pub enum Statements {
     GetUserPriveleges,
     GetUserUsages,
 
-    GetAuthorInfoMany
+    GetAuthorInfoMany,
+    GetAuthorInfoFiltered,
 }
 
 #[async_trait]
@@ -244,7 +249,11 @@ impl InitStatements for roles::Unauthenticated {
             Statements::GetAuthorInfoMany => client.prepare_typed(
                 include_str!("sql/unauthenticated/get_author_info_many.sql"),
                 &[]).await
-                .map_err(|error| InitStatementsError {statement_key: Statements::GetAuthorInfoMany, error})?,         
+                .map_err(|error| InitStatementsError {statement_key: Statements::GetAuthorInfoMany, error})?,       
+            Statements::GetAuthorInfoFiltered => client.prepare_typed(
+                include_str!("sql/unauthenticated/get_author_info_filtered.sql"),
+                &[String::SQL_TYPE]).await
+                .map_err(|error| InitStatementsError {statement_key: Statements::GetAuthorInfoFiltered, error})?,     
         };
 
         Ok(statements)

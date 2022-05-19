@@ -23,7 +23,9 @@ WHERE
     AND
     ((use_count_filter).limits.max IS NULL OR use_count <= (use_count_filter).limits.max)
 ORDER BY 
-    CASE WHEN (rating_filter).ordering = 'desc' THEN rating END DESC NULLS LAST,
-    CASE WHEN (rating_filter).ordering = 'asc' THEN rating END ASC NULLS LAST,
+    --High precision on rating makes it less likely to group rows by this col, 
+    --thus sorting by use_count first
     CASE WHEN (use_count_filter).ordering = 'desc' THEN use_count END DESC NULLS LAST,
-    CASE WHEN (use_count_filter).ordering = 'asc' THEN use_count END ASC NULLS LAST;
+    CASE WHEN (use_count_filter).ordering = 'asc' THEN use_count END ASC NULLS LAST,
+    CASE WHEN (rating_filter).ordering = 'desc' THEN rating END DESC NULLS LAST,
+    CASE WHEN (rating_filter).ordering = 'asc' THEN rating END ASC NULLS LAST;
