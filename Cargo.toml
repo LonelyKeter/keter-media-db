@@ -6,10 +6,28 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["model", "auth"]
+model = ["auth"]
+auth = ["sha2"]
+store = []
+
+
 [dependencies.tokio-postgres]
 version = "0.7.2"
 features = []
 
+[dependencies.keter-media-model]
+path = "../keter-media-model"
+features = ["postgres"]
 
 [dependencies]
-tokio = {version = "1", features = ["rt"] }
+tokio = {version = "1", features = ["rt", "macros"] }
+postgres_query = { path = "../postgres-query/postgres_query" }
+async-trait = {version = "0.1.50"}
+sha2 = { version = "0.9.5", optional = true }
+lazy_static = "1.4.0"
+postgres-types = { version = "0.2.1", features = ["derive"] }
+hex = { version = "0.4.3"}
+enum-map = "1.1.1"
+pretty_unwrap = { path = "../pretty_unwrap" }
